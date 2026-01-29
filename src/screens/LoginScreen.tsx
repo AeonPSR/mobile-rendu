@@ -105,6 +105,21 @@ export default function LoginScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              // Skip authentication for now
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' as never }],
+              });
+              // Simulate successful login without backend
+              signIn('guest@example.com', 'password');
+            }}
+          >
+            <Text style={styles.skipText}>Continue as Guest</Text>
+          </TouchableOpacity>
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity onPress={navigateToRegister}>
@@ -196,5 +211,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.semibold,
     color: Colors.primary,
+  },
+  skipButton: {
+    backgroundColor: Colors.textSecondary,
+    borderRadius: 12,
+    padding: Spacing.md,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  skipText: {
+    fontSize: 16,
+    fontFamily: Fonts.medium,
+    color: Colors.surface,
   },
 });

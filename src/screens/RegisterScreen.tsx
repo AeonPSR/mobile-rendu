@@ -142,6 +142,16 @@ export default function RegisterScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              // Skip authentication for now
+              signUp('guest@example.com', 'password', 'Guest', 'User');
+            }}
+          >
+            <Text style={styles.skipText}>Continue as Guest</Text>
+          </TouchableOpacity>
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={navigateToLogin}>
@@ -239,5 +249,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.semibold,
     color: Colors.primary,
+  },
+  skipButton: {
+    backgroundColor: Colors.textSecondary,
+    borderRadius: 12,
+    padding: Spacing.md,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  skipText: {
+    fontSize: 16,
+    fontFamily: Fonts.medium,
+    color: Colors.surface,
   },
 });

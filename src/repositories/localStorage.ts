@@ -52,7 +52,8 @@ export class LocalStorageService implements ILocalStorage {
 
   async getAllKeys(): Promise<string[]> {
     try {
-      return await AsyncStorage.getAllKeys();
+      const keys = await AsyncStorage.getAllKeys();
+      return [...keys]; // Convert readonly array to mutable array
     } catch (error) {
       console.error('Error getting all keys:', error);
       return [];

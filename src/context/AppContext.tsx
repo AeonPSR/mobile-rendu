@@ -105,6 +105,23 @@ export function AppProvider({ children }: AppProviderProps) {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
     
+    // Guest mode for when Supabase is unavailable
+    if (email === 'guest@example.com') {
+      const guestUser = {
+        id: 'guest-user',
+        email: 'guest@example.com',
+        firstName: 'Guest',
+        lastName: 'User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      dispatch({ type: 'SET_USER', payload: guestUser });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return true;
+    }
+    
     try {
       const result = await AuthRepository.signIn(email, password);
       
@@ -126,6 +143,23 @@ export function AppProvider({ children }: AppProviderProps) {
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string): Promise<boolean> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
+    
+    // Guest mode for when Supabase is unavailable
+    if (email === 'guest@example.com') {
+      const guestUser = {
+        id: 'guest-user',
+        email: 'guest@example.com',
+        firstName: firstName || 'Guest',
+        lastName: lastName || 'User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      dispatch({ type: 'SET_USER', payload: guestUser });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return true;
+    }
     
     try {
       const result = await AuthRepository.signUp(email, password, firstName, lastName);
