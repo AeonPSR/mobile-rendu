@@ -1,6 +1,45 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Config } from '@/utils/config';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+
+// Platform-aware storage
+const createStorage = () => {
+  if (Platform.OS === 'web') {
+    // Use localStorage for web
+    return {
+      getItem: async (key: string) => {
+        if (typeof localStorage !== 'undefined') {
+          return localStorage.getItem(key);
+        }
+        return null;
+      },
+      setItem: async (key: string, value: string) => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(key, value);
+        }
+      },
+      removeItem: async (key: string) => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(key);
+        }
+      },
+    };
+  } else {
+    // Use SecureStore for mobile
+    return {
+      getItem: async (key: string) => {
+        return await SecureStore.getItemAsync(key);
+      },
+      setItem: async (key: string, value: string) => {
+        await SecureStore.setItemAsync(key, value);
+      },
+      removeItem: async (key: string) => {
+        await SecureStore.deleteItemAsync(key);
+      },
+    };
+  }
+};
 
 // Supabase client singleton
 class SupabaseService {
@@ -10,17 +49,7 @@ class SupabaseService {
   private constructor() {
     this.client = createClient(Config.SUPABASE_URL, Config.SUPABASE_ANON_KEY, {
       auth: {
-        storage: {
-          getItem: async (key: string) => {
-            return await SecureStore.getItemAsync(key);
-          },
-          setItem: async (key: string, value: string) => {
-            await SecureStore.setItemAsync(key, value);
-          },
-          removeItem: async (key: string) => {
-            await SecureStore.deleteItemAsync(key);
-          },
-        },
+        storage: createStorage(),
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,

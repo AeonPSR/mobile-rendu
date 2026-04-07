@@ -17,7 +17,7 @@
   - [x] from_currency, to_currency, rate
   - [x] last_updated timestamp
 - [x] Set up row-level security (RLS) policies
-- [ ] Test database connections and queries
+- [x] Test database connections and queries
 
 ### Repository Implementation 
 - [ ] `AccountRepository` - CRUD for user accounts

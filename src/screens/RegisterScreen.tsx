@@ -34,16 +34,19 @@ export default function RegisterScreen({ navigation }: Props) {
   const { colors } = useTheme();
 
   const handleSignUp = async () => {
+    console.log('🔥 REGISTER: handleSignUp called');
     hapticService.impactLight();
     
     // Validation
     if (!email.trim() || !password.trim() || !firstName.trim()) {
+      console.log('❌ REGISTER: Validation failed - missing fields');
       hapticService.notificationError();
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
     if (!validateEmail(email)) {
+      console.log('❌ REGISTER: Email validation failed');
       hapticService.notificationError();
       Alert.alert('Error', 'Please enter a valid email address');
       return;
@@ -51,16 +54,21 @@ export default function RegisterScreen({ navigation }: Props) {
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
+      console.log('❌ REGISTER: Password validation failed');
       hapticService.notificationError();
       Alert.alert('Password Error', passwordValidation.message);
       return;
     }
 
+    console.log('✅ REGISTER: Validation passed, calling signUp...');
     const success = await signUp(email.trim(), password, firstName.trim(), lastName.trim());
+    console.log('📝 REGISTER: signUp result:', success);
     
     if (success) {
+      console.log('✅ REGISTER: Success!');
       hapticService.notificationSuccess();
     } else {
+      console.log('❌ REGISTER: Failed:', state.error);
       hapticService.notificationError();
       if (state.error) {
         Alert.alert('Sign Up Failed', state.error);
