@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/utils/config';
+import { useTheme } from '@/context/ThemeContext';
 
 // Import screens
 import WalletScreen from '@/screens/WalletScreen';
@@ -48,6 +48,8 @@ const SettingsStack = createStackNavigator<SettingsStackParamList>();
 
 // Stack Navigators
 function WalletNavigator() {
+  const { colors } = useTheme();
+  
   return (
     <WalletStack.Navigator>
       <WalletStack.Screen 
@@ -55,8 +57,9 @@ function WalletNavigator() {
         component={WalletScreen}
         options={{ 
           title: 'My Wallet',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
       <WalletStack.Screen 
@@ -64,8 +67,9 @@ function WalletNavigator() {
         component={AddMoneyScreen}
         options={{ 
           title: 'Add Money',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
       <WalletStack.Screen 
@@ -73,8 +77,9 @@ function WalletNavigator() {
         component={TransferScreen}
         options={{ 
           title: 'Transfer',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
     </WalletStack.Navigator>
@@ -82,6 +87,8 @@ function WalletNavigator() {
 }
 
 function TransactionsNavigator() {
+  const { colors } = useTheme();
+  
   return (
     <TransactionStack.Navigator>
       <TransactionStack.Screen 
@@ -89,8 +96,9 @@ function TransactionsNavigator() {
         component={TransactionsScreen}
         options={{ 
           title: 'Transactions',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
       <TransactionStack.Screen 
@@ -98,8 +106,9 @@ function TransactionsNavigator() {
         component={TransactionDetailScreen}
         options={{ 
           title: 'Transaction Details',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
     </TransactionStack.Navigator>
@@ -107,6 +116,8 @@ function TransactionsNavigator() {
 }
 
 function ConversionNavigator() {
+  const { colors } = useTheme();
+  
   return (
     <ConversionStack.Navigator>
       <ConversionStack.Screen 
@@ -114,8 +125,9 @@ function ConversionNavigator() {
         component={ConversionScreen}
         options={{ 
           title: 'Convert Currency',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
     </ConversionStack.Navigator>
@@ -123,6 +135,8 @@ function ConversionNavigator() {
 }
 
 function SettingsNavigator() {
+  const { colors } = useTheme();
+  
   return (
     <SettingsStack.Navigator>
       <SettingsStack.Screen 
@@ -130,8 +144,9 @@ function SettingsNavigator() {
         component={SettingsScreen}
         options={{ 
           title: 'Settings',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text },
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
         }}
       />
     </SettingsStack.Navigator>
@@ -140,6 +155,8 @@ function SettingsNavigator() {
 
 // Main Tab Navigator
 export default function MainNavigator() {
+  const { colors } = useTheme();
+  
   return (
     <Tab.Navigator
       initialRouteName="WalletTab"
@@ -167,11 +184,11 @@ export default function MainNavigator() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textSecondary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
         },
       })}
     >

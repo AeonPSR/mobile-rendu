@@ -11,8 +11,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { WalletStackParamList } from '@/navigation/MainNavigator';
-import { Colors, Fonts, Spacing } from '@/utils/config';
+import { Fonts, Spacing } from '@/utils/config';
 import { useApp } from '@/context/AppContext';
+import { useTheme } from '@/context/ThemeContext';
+import { hapticService } from '@/services/hapticService';
 import { formatCurrency, getCurrencyFlag } from '@/utils/helpers';
 
 type WalletScreenNavigationProp = StackNavigationProp<WalletStackParamList, 'Wallet'>;
@@ -35,7 +37,7 @@ const mockTransactions = [
     amount: '+¥1014.902',
     description: 'Conversion',
     time: '16:35 PM',
-    color: Colors.success,
+    isPositive: true,
   },
   {
     id: '2',
@@ -43,7 +45,7 @@ const mockTransactions = [
     amount: '-$140.00',
     description: 'Conversion',
     time: '16:35 PM',
-    color: Colors.error,
+    isPositive: false,
   },
   {
     id: '3',
@@ -51,7 +53,7 @@ const mockTransactions = [
     amount: '-¥253.62',
     description: 'Transfer',
     time: '15:20 PM',
-    color: Colors.error,
+    isPositive: false,
   },
   {
     id: '4',
@@ -59,68 +61,74 @@ const mockTransactions = [
     amount: '+$100.00',
     description: 'Balance top-up',
     time: '14:15 PM',
-    color: Colors.success,
+    isPositive: true,
   },
 ];
 
 export default function WalletScreen({ navigation }: Props) {
   const { state } = useApp();
+  const { colors } = useTheme();
   const primaryAccount = mockAccounts[0]; // USD account as primary
 
   const handleAddMoney = () => {
+    hapticService.impactLight();
     navigation.navigate('AddMoney');
   };
 
   const handleTransfer = () => {
+    hapticService.impactLight();
     navigation.navigate('Transfer');
   };
 
   const renderAccountCard = ({ item }: { item: any }) => (
-    <View style={styles.accountCard}>
+    <View style={[styles.accountCard, { backgroundColor: colors.surface }]}>
       <View style={styles.accountHeader}>
         <Text style={styles.currencyFlag}>{item.flag}</Text>
-        <Text style={styles.currencyCode}>{item.currency}</Text>
-        <TouchableOpacity>
-          <Ionicons name="add" size={24} color={Colors.primary} />
+        <Text style={[styles.currencyCode, { color: colors.text }]}>{item.currency}</Text>
+        <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
+          <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
-      <Text style={styles.accountBalance}>
+      <Text style={[styles.accountBalance, { color: colors.text }]}>
         {formatCurrency(item.balance, item.currency)}
       </Text>
     </View>
   );
 
   const renderTransactionItem = ({ item }: { item: any }) => (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionIcon}>
+    <View style={[styles.transactionItem, { backgroundColor: colors.surface }]}>
+      <View style={[styles.transactionIcon, { backgroundColor: colors.primary }]}>
         <Ionicons 
           name={item.type === 'conversion' ? 'swap-horizontal' : 
                 item.type === 'transfer' ? 'arrow-up' : 'add'} 
           size={20} 
-          color={Colors.surface} 
+          color={colors.surface} 
         />
       </View>
       <View style={styles.transactionInfo}>
-        <Text style={styles.transactionDescription}>{item.description}</Text>
-        <Text style={styles.transactionTime}>{item.time}</Text>
+        <Text style={[styles.transactionDescription, { color: colors.text }]}>{item.description}</Text>
+        <Text style={[styles.transactionTime, { color: colors.textSecondary }]}>{item.time}</Text>
       </View>
-      <Text style={[styles.transactionAmount, { color: item.color }]}>
+      <Text style={[
+        styles.transactionAmount, 
+        { color: item.isPositive ? colors.success : colors.error }
+      ]}>
         {item.amount}
       </Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity>
-            <Ionicons name="person-circle-outline" size={32} color={Colors.text} />
+          <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
+            <Ionicons name="person-circle-outline" size={32} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Wallet</Text>
-          <TouchableOpacity>
-            <Ionicons name="notifications-outline" size={24} color={Colors.text} />
+          <Text style={[styles.headerTitle, { color: colors.text }]}>My Wallet</Text>
+          <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
+            <Ionicons name="notifications-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -137,8 +145,8 @@ export default function WalletScreen({ navigation }: Props) {
 
         {/* Main Balance */}
         <View style={styles.balanceSection}>
-          <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>
+          <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>Balance</Text>
+          <Text style={[styles.balanceAmount, { color: colors.text }]}>
             {formatCurrency(primaryAccount.balance, primaryAccount.currency)}
           </Text>
         </View>
@@ -146,40 +154,40 @@ export default function WalletScreen({ navigation }: Props) {
         {/* Action Buttons */}
         <View style={styles.actionsSection}>
           <TouchableOpacity style={styles.actionButton} onPress={handleAddMoney}>
-            <View style={styles.actionIcon}>
-              <Ionicons name="add" size={24} color={Colors.surface} />
+            <View style={[styles.actionIcon, { backgroundColor: colors.primary }]}>
+              <Ionicons name="add" size={24} color={colors.surface} />
             </View>
-            <Text style={styles.actionLabel}>Add</Text>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Add</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleTransfer}>
-            <View style={styles.actionIcon}>
-              <Ionicons name="arrow-up" size={24} color={Colors.surface} />
+            <View style={[styles.actionIcon, { backgroundColor: colors.primary }]}>
+              <Ionicons name="arrow-up" size={24} color={colors.surface} />
             </View>
-            <Text style={styles.actionLabel}>Send</Text>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Send</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={styles.actionIcon}>
-              <Ionicons name="swap-horizontal" size={24} color={Colors.surface} />
+          <TouchableOpacity style={styles.actionButton} onPress={() => hapticService.impactLight()}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.primary }]}>
+              <Ionicons name="swap-horizontal" size={24} color={colors.surface} />
             </View>
-            <Text style={styles.actionLabel}>Convert</Text>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Convert</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={styles.actionIcon}>
-              <Ionicons name="ellipsis-horizontal" size={24} color={Colors.surface} />
+          <TouchableOpacity style={styles.actionButton} onPress={() => hapticService.impactLight()}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.primary }]}>
+              <Ionicons name="ellipsis-horizontal" size={24} color={colors.surface} />
             </View>
-            <Text style={styles.actionLabel}>More</Text>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>More</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recent Transactions */}
         <View style={styles.transactionsSection}>
           <View style={styles.transactionsHeader}>
-            <Text style={styles.transactionsTitle}>Transactions</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View all</Text>
+            <Text style={[styles.transactionsTitle, { color: colors.text }]}>Transactions</Text>
+            <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
             </TouchableOpacity>
           </View>
 
@@ -198,7 +206,6 @@ export default function WalletScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
@@ -213,7 +220,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: Fonts.semibold,
-    color: Colors.text,
   },
   accountsList: {
     marginTop: Spacing.md,
@@ -223,7 +229,6 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   accountCard: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: Spacing.md,
     width: 120,
@@ -241,14 +246,12 @@ const styles = StyleSheet.create({
   currencyCode: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: Colors.text,
     flex: 1,
     marginLeft: Spacing.sm,
   },
   accountBalance: {
     fontSize: 16,
     fontFamily: Fonts.semibold,
-    color: Colors.text,
   },
   balanceSection: {
     alignItems: 'center',
@@ -258,13 +261,11 @@ const styles = StyleSheet.create({
   balanceLabel: {
     fontSize: 16,
     fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   balanceAmount: {
     fontSize: 36,
     fontFamily: Fonts.bold,
-    color: Colors.text,
   },
   actionsSection: {
     flexDirection: 'row',
@@ -276,7 +277,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionIcon: {
-    backgroundColor: Colors.text,
     borderRadius: 24,
     width: 48,
     height: 48,
@@ -287,7 +287,6 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 12,
     fontFamily: Fonts.medium,
-    color: Colors.text,
   },
   transactionsSection: {
     paddingHorizontal: Spacing.lg,
@@ -302,22 +301,20 @@ const styles = StyleSheet.create({
   transactionsTitle: {
     fontSize: 18,
     fontFamily: Fonts.semibold,
-    color: Colors.text,
   },
   viewAllText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: Colors.primary,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 12,
+    marginBottom: Spacing.sm,
   },
   transactionIcon: {
-    backgroundColor: Colors.textSecondary,
     borderRadius: 20,
     width: 40,
     height: 40,
@@ -331,12 +328,10 @@ const styles = StyleSheet.create({
   transactionDescription: {
     fontSize: 16,
     fontFamily: Fonts.medium,
-    color: Colors.text,
   },
   transactionTime: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
     marginTop: 2,
   },
   transactionAmount: {

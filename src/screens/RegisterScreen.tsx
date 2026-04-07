@@ -13,8 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '@/navigation/AuthNavigator';
-import { Colors, Fonts, Spacing } from '@/utils/config';
+import { Fonts, Spacing } from '@/utils/config';
 import { useApp } from '@/context/AppContext';
+import { useTheme } from '@/context/ThemeContext';
+import { hapticService } from '@/services/hapticService';
 import { validateEmail, validatePassword } from '@/utils/helpers';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
@@ -29,83 +31,107 @@ export default function RegisterScreen({ navigation }: Props) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const { signUp, state } = useApp();
+  const { colors } = useTheme();
 
   const handleSignUp = async () => {
+    hapticService.impactLight();
+    
     // Validation
     if (!email.trim() || !password.trim() || !firstName.trim()) {
+      hapticService.notificationError();
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
     if (!validateEmail(email)) {
+      hapticService.notificationError();
       Alert.alert('Error', 'Please enter a valid email address');
       return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
+      hapticService.notificationError();
       Alert.alert('Password Error', passwordValidation.message);
       return;
     }
 
     const success = await signUp(email.trim(), password, firstName.trim(), lastName.trim());
     
-    if (!success && state.error) {
-      Alert.alert('Sign Up Failed', state.error);
+    if (success) {
+      hapticService.notificationSuccess();
+    } else {
+      hapticService.notificationError();
+      if (state.error) {
+        Alert.alert('Sign Up Failed', state.error);
+      }
     }
   };
 
   const navigateToLogin = () => {
+    hapticService.selectionChanged();
     navigation.navigate('Login');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join International Wallet</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Join International Wallet</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>First Name *</Text>
+              <Text style={[styles.label, { color: colors.text }]}>First Name *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { 
+                  backgroundColor: colors.surface, 
+                  color: colors.text,
+                  borderColor: colors.border 
+                }]}
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholder="Enter your first name"
-                placeholderTextColor={Colors.placeholder}
+                placeholderTextColor={colors.placeholder}
                 autoCapitalize="words"
                 autoCorrect={false}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Last Name</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Last Name</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { 
+                  backgroundColor: colors.surface, 
+                  color: colors.text,
+                  borderColor: colors.border 
+                }]}
                 value={lastName}
                 onChangeText={setLastName}
                 placeholder="Enter your last name"
-                placeholderTextColor={Colors.placeholder}
+                placeholderTextColor={colors.placeholder}
                 autoCapitalize="words"
                 autoCorrect={false}
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email *</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Email *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { 
+                  backgroundColor: colors.surface, 
+                  color: colors.text,
+                  borderColor: colors.border 
+                }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Enter your email"
-                placeholderTextColor={Colors.placeholder}
+                placeholderTextColor={colors.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -113,49 +139,58 @@ export default function RegisterScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password *</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Password *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { 
+                  backgroundColor: colors.surface, 
+                  color: colors.text,
+                  borderColor: colors.border 
+                }]}
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Create a password"
-                placeholderTextColor={Colors.placeholder}
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              <Text style={styles.passwordHint}>
+              <Text style={[styles.passwordHint, { color: colors.textSecondary }]}>
                 Must be 8+ characters with uppercase, lowercase, and number
               </Text>
             </View>
 
             <TouchableOpacity
-              style={[styles.button, state.isLoading && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                { backgroundColor: colors.primary },
+                state.isLoading && styles.buttonDisabled
+              ]}
               onPress={handleSignUp}
               disabled={state.isLoading}
             >
               {state.isLoading ? (
-                <ActivityIndicator color={Colors.surface} />
+                <ActivityIndicator color={colors.surface} />
               ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
+                <Text style={[styles.buttonText, { color: colors.surface }]}>Create Account</Text>
               )}
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
-            style={styles.skipButton}
+            style={[styles.skipButton, { backgroundColor: colors.textSecondary }]}
             onPress={() => {
+              hapticService.impactMedium();
               // Skip authentication for now
               signUp('guest@example.com', 'password', 'Guest', 'User');
             }}
           >
-            <Text style={styles.skipText}>Continue as Guest</Text>
+            <Text style={[styles.skipText, { color: colors.surface }]}>Continue as Guest</Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
             <TouchableOpacity onPress={navigateToLogin}>
-              <Text style={styles.linkText}>Sign In</Text>
+              <Text style={[styles.linkText, { color: colors.primary }]}>Sign In</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -167,7 +202,6 @@ export default function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -184,13 +218,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontFamily: Fonts.bold,
-    color: Colors.text,
     marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: 16,
     fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
   },
   form: {
     marginBottom: Spacing.xl,
@@ -201,27 +233,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontFamily: Fonts.medium,
-    color: Colors.text,
     marginBottom: Spacing.sm,
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: Spacing.md,
     fontSize: 16,
     fontFamily: Fonts.regular,
-    color: Colors.text,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   passwordHint: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
     marginTop: Spacing.sm,
   },
   button: {
-    backgroundColor: Colors.primary,
     borderRadius: 12,
     padding: Spacing.md,
     alignItems: 'center',
@@ -233,7 +259,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontFamily: Fonts.semibold,
-    color: Colors.surface,
   },
   footer: {
     flexDirection: 'row',
@@ -243,15 +268,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
   },
   linkText: {
     fontSize: 14,
     fontFamily: Fonts.semibold,
-    color: Colors.primary,
   },
   skipButton: {
-    backgroundColor: Colors.textSecondary,
     borderRadius: 12,
     padding: Spacing.md,
     alignItems: 'center',
@@ -260,6 +282,5 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 16,
     fontFamily: Fonts.medium,
-    color: Colors.surface,
   },
 });

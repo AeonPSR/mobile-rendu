@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { User, Account, Transaction, Currency, AppState, LoadingState } from '@/models';
-import AuthRepository from '@/repositories/authRepository';
+import UserRepository from '@/repositories/userRepository';
 
 // Action types
 type AppAction = 
@@ -123,7 +123,7 @@ export function AppProvider({ children }: AppProviderProps) {
     }
     
     try {
-      const result = await AuthRepository.signIn(email, password);
+      const result = await UserRepository.signIn(email, password);
       
       if (result.success) {
         dispatch({ type: 'SET_USER', payload: result.data });
@@ -162,7 +162,7 @@ export function AppProvider({ children }: AppProviderProps) {
     }
     
     try {
-      const result = await AuthRepository.signUp(email, password, firstName, lastName);
+      const result = await UserRepository.createUser(email, password, firstName, lastName);
       
       if (result.success) {
         dispatch({ type: 'SET_USER', payload: result.data });
@@ -183,7 +183,7 @@ export function AppProvider({ children }: AppProviderProps) {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      await AuthRepository.signOut();
+      await UserRepository.signOut();
       dispatch({ type: 'RESET_STATE' });
     } catch (error) {
       // Still reset state even if API call fails
@@ -195,10 +195,10 @@ export function AppProvider({ children }: AppProviderProps) {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      const isAuth = await AuthRepository.isAuthenticated();
+      const isAuth = await UserRepository.isAuthenticated();
       
       if (isAuth) {
-        const result = await AuthRepository.getCurrentUser();
+        const result = await UserRepository.getCurrentUser();
         if (result.success) {
           dispatch({ type: 'SET_USER', payload: result.data });
           dispatch({ type: 'SET_AUTHENTICATED', payload: true });

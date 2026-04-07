@@ -8,11 +8,13 @@ import { StyleSheet, View } from 'react-native';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import MainNavigator from './src/navigation/MainNavigator';
 import { AppProvider, useApp } from './src/context/AppContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import LoadingScreen from './src/screens/LoadingScreen';
 
 // Main App Component
 function AppContent() {
   const { state, checkAuthStatus } = useApp();
+  const { isDark, colors } = useTheme();
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
@@ -36,9 +38,9 @@ function AppContent() {
 
   // Choose navigation based on auth status
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
       <NavigationContainer>
-        <StatusBar style="auto" />
+        <StatusBar style={isDark ? "light" : "dark"} />
         {state.isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
       </NavigationContainer>
     </GestureHandlerRootView>
@@ -48,9 +50,11 @@ function AppContent() {
 // Root App Component with Context Provider
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 
