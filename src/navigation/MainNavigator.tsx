@@ -11,6 +11,7 @@ import TransactionsScreen from '@/screens/TransactionsScreen';
 import TransactionDetailScreen from '@/screens/TransactionDetailScreen';
 import AddMoneyScreen from '@/screens/AddMoneyScreen';
 import TransferScreen from '@/screens/TransferScreen';
+import WithdrawScreen from '@/screens/WithdrawScreen';
 
 // Type definitions for navigation
 export type MainTabParamList = {
@@ -22,6 +23,7 @@ export type WalletStackParamList = {
   Wallet: undefined;
   AddMoney: undefined;
   Transfer: undefined;
+  Withdraw: undefined;
 };
 
 export type TransactionStackParamList = {
@@ -67,6 +69,16 @@ function WalletNavigator() {
         component={TransferScreen}
         options={{ 
           title: 'Transfer',
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text },
+          headerTintColor: colors.primary,
+        }}
+      />
+      <WalletStack.Screen 
+        name="Withdraw" 
+        component={WithdrawScreen}
+        options={{ 
+          title: 'Withdraw',
           headerStyle: { backgroundColor: colors.background },
           headerTitleStyle: { color: colors.text },
           headerTintColor: colors.primary,

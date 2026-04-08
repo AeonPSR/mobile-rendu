@@ -22,27 +22,30 @@ export default function TransactionsScreen() {
   
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'TOP_UP': return 'add-circle';
-      case 'TRANSFER': return 'swap-horizontal';
-      case 'CONVERSION': return 'refresh';
+      case 'top_up': return 'add-circle';
+      case 'withdrawal': return 'remove-circle';
+      case 'transfer': return 'swap-horizontal';
+      case 'conversion': return 'refresh';
       default: return 'help-circle';
     }
   };
   
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'TOP_UP': return colors.success;
-      case 'TRANSFER': return colors.primary;
-      case 'CONVERSION': return colors.warning;
+      case 'top_up': return colors.success;
+      case 'withdrawal': return colors.error;
+      case 'transfer': return colors.primary;
+      case 'conversion': return colors.warning;
       default: return colors.textSecondary;
     }
   };
   
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'TOP_UP': return 'Money Added';
-      case 'TRANSFER': return 'Transfer';
-      case 'CONVERSION': return 'Currency Conversion';
+      case 'top_up': return 'Money Added';
+      case 'withdrawal': return 'Money Withdrawn';
+      case 'transfer': return 'Transfer';
+      case 'conversion': return 'Currency Conversion';
       default: return 'Transaction';
     }
   };
@@ -57,18 +60,21 @@ export default function TransactionsScreen() {
   };
   
   const formatTransactionAmount = (transaction: any) => {
-    if (transaction.type === 'TOP_UP') {
-      return `+$${transaction.toAmount || transaction.amount}`;
-    } else if (transaction.type === 'TRANSFER') {
-      return `$${transaction.fromAmount || transaction.amount}`;
-    } else if (transaction.type === 'CONVERSION') {
+    if (transaction.type === 'top_up') {
+      return `+$${transaction.toAmount || transaction.amount || '0.00'}`;
+    } else if (transaction.type === 'withdrawal') {
+      return `-$${transaction.fromAmount || transaction.amount || '0.00'}`;
+    } else if (transaction.type === 'transfer') {
+      return `-$${transaction.fromAmount || transaction.amount || '0.00'}`;
+    } else if (transaction.type === 'conversion') {
       return `${transaction.fromAmount} → ${transaction.toAmount}`;
     }
     return `$${transaction.amount || '0.00'}`;
   };
   
   const getAmountColor = (transaction: any) => {
-    if (transaction.type === 'TOP_UP') return colors.success;
+    if (transaction.type === 'top_up') return colors.success;
+    if (transaction.type === 'withdrawal') return colors.error;
     return colors.text;
   };
 

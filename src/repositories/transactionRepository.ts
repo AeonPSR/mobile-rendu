@@ -408,6 +408,37 @@ export class TransactionRepository {
     }
   }
 
+  async createWithdrawal(
+    accountId: string, 
+    amount: number, 
+    description?: string
+  ): Promise<ApiResponse<Transaction>> {
+    try {
+      const accountResult = await AccountRepository.getAccountById(accountId);
+      if (!accountResult.success || !accountResult.data) {
+        return { success: false, error: 'Account not found' };
+      }
+      
+      const account = accountResult.data;
+      
+      if (account.balance < amount) {
+        return { success: false, error: 'Insufficient balance' };
+      }
+      
+      return this.createTransaction({
+        user_id: account.userId,
+        type: TransactionType.WITHDRAWAL,
+        from_account_id: accountId,
+        from_amount: amount,
+        from_currency: account.currencyCode,
+        description: description || `Withdrawal ${account.currencyCode} ${amount}`,
+      });
+    } catch (error) {
+      console.error('Error creating withdrawal:', error);
+      return { success: false, error: 'Failed to create withdrawal' };
+    }
+  }
+
   async createTransfer(
     fromAccountId: string,
     toAccountId: string,

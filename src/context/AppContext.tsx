@@ -92,6 +92,7 @@ interface AppContextType {
   
   // Transaction actions
   createTopUp: (accountId: string, amount: number, description?: string) => Promise<boolean>;
+  createWithdrawal: (accountId: string, amount: number, description?: string) => Promise<boolean>;
   createTransfer: (fromAccountId: string, toAccountId: string, amount: number, description?: string) => Promise<boolean>;
   createConversion: (fromAccountId: string, toAccountId: string, fromAmount: number, exchangeRate: number) => Promise<boolean>;
   loadUserTransactions: (userId: string) => Promise<void>;
@@ -325,6 +326,26 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
+  const createWithdrawal = async (accountId: string, amount: number, description?: string): Promise<boolean> => {
+    if (!state.user) return false;
+    
+    try {
+      const result = await TransactionRepository.createWithdrawal(accountId, amount, description);
+      
+      if (result.success && result.data) {
+        dispatch({ type: 'ADD_TRANSACTION', payload: result.data });
+        await loadUserAccounts(state.user.id);
+        return true;
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to create withdrawal' });
+        return false;
+      }
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Network error during withdrawal' });
+      return false;
+    }
+  };
+
   const createTransfer = async (fromAccountId: string, toAccountId: string, amount: number, description?: string): Promise<boolean> => {
     if (!state.user) return false;
     
@@ -423,6 +444,7 @@ export function AppProvider({ children }: AppProviderProps) {
     loadUserAccounts,
     createAccount,
     createTopUp,
+    createWithdrawal,
     createTransfer,
     createConversion,
     loadUserTransactions,

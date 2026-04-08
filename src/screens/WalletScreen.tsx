@@ -23,40 +23,6 @@ interface Props {
   navigation: WalletScreenNavigationProp;
 }
 
-const mockTransactions = [
-  {
-    id: '1',
-    type: 'conversion',
-    amount: '+¥1014.902',
-    description: 'Conversion',
-    time: '16:35 PM',
-    isPositive: true,
-  },
-  {
-    id: '2',
-    type: 'conversion',
-    amount: '-$140.00',
-    description: 'Conversion',
-    time: '16:35 PM',
-    isPositive: false,
-  },
-  {
-    id: '3',
-    type: 'transfer',
-    amount: '-¥253.62',
-    description: 'Transfer',
-    time: '15:20 PM',
-    isPositive: false,
-  },
-  {
-    id: '4',
-    type: 'top_up',
-    amount: '+$100.00',
-    description: 'Balance top-up',
-    time: '14:15 PM',
-    isPositive: true,
-  },
-];
 
 export default function WalletScreen({ navigation }: Props) {
   const { state } = useApp();
@@ -76,6 +42,11 @@ export default function WalletScreen({ navigation }: Props) {
     navigation.navigate('Transfer');
   };
 
+  const handleWithdraw = () => {
+    hapticService.impactLight();
+    navigation.navigate('Withdraw');
+  };
+
   const renderAccountCard = ({ item }: { item: any }) => (
     <View style={[styles.accountCard, { backgroundColor: colors.surface }]}>
       <View style={styles.accountHeader}>
@@ -90,29 +61,6 @@ export default function WalletScreen({ navigation }: Props) {
       </View>
       <Text style={[styles.accountBalance, { color: colors.text }]}>
         {formatCurrency(item.balance, item.currencyCode)}
-      </Text>
-    </View>
-  );
-
-  const renderTransactionItem = ({ item }: { item: any }) => (
-    <View style={[styles.transactionItem, { backgroundColor: colors.surface }]}>
-      <View style={[styles.transactionIcon, { backgroundColor: colors.primary }]}>
-        <Ionicons 
-          name={item.type === 'conversion' ? 'swap-horizontal' : 
-                item.type === 'transfer' ? 'arrow-up' : 'add'} 
-          size={20} 
-          color={colors.surface} 
-        />
-      </View>
-      <View style={styles.transactionInfo}>
-        <Text style={[styles.transactionDescription, { color: colors.text }]}>{item.description}</Text>
-        <Text style={[styles.transactionTime, { color: colors.textSecondary }]}>{item.time}</Text>
-      </View>
-      <Text style={[
-        styles.transactionAmount, 
-        { color: item.isPositive ? colors.success : colors.error }
-      ]}>
-        {item.amount}
       </Text>
     </View>
   );
@@ -169,36 +117,12 @@ export default function WalletScreen({ navigation }: Props) {
             <Text style={[styles.actionLabel, { color: colors.text }]}>Send</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={() => hapticService.impactLight()}>
-            <View style={[styles.actionIcon, { backgroundColor: colors.primary }]}>
-              <Ionicons name="swap-horizontal" size={24} color={colors.surface} />
+          <TouchableOpacity style={styles.actionButton} onPress={handleWithdraw}>
+            <View style={[styles.actionIcon, { backgroundColor: colors.error }]}>
+              <Ionicons name="remove" size={24} color={colors.surface} />
             </View>
-            <Text style={[styles.actionLabel, { color: colors.text }]}>Convert</Text>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Withdraw</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={() => hapticService.impactLight()}>
-            <View style={[styles.actionIcon, { backgroundColor: colors.primary }]}>
-              <Ionicons name="ellipsis-horizontal" size={24} color={colors.surface} />
-            </View>
-            <Text style={[styles.actionLabel, { color: colors.text }]}>More</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recent Transactions */}
-        <View style={styles.transactionsSection}>
-          <View style={styles.transactionsHeader}>
-            <Text style={[styles.transactionsTitle, { color: colors.text }]}>Transactions</Text>
-            <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
-              <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={mockTransactions}
-            renderItem={renderTransactionItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -289,55 +213,5 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 12,
     fontFamily: Fonts.medium,
-  },
-  transactionsSection: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-  },
-  transactionsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  transactionsTitle: {
-    fontSize: 18,
-    fontFamily: Fonts.semibold,
-  },
-  viewAllText: {
-    fontSize: 14,
-    fontFamily: Fonts.medium,
-  },
-  transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    borderRadius: 12,
-    marginBottom: Spacing.sm,
-  },
-  transactionIcon: {
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  transactionInfo: {
-    flex: 1,
-  },
-  transactionDescription: {
-    fontSize: 16,
-    fontFamily: Fonts.medium,
-  },
-  transactionTime: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-    marginTop: 2,
-  },
-  transactionAmount: {
-    fontSize: 16,
-    fontFamily: Fonts.semibold,
   },
 });
