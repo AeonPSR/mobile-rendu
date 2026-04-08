@@ -81,7 +81,10 @@ export default function WalletScreen({ navigation }: Props) {
       <View style={styles.accountHeader}>
         <Text style={styles.currencyFlag}>{item.currency?.flag || getCurrencyFlag(item.currencyCode)}</Text>
         <Text style={[styles.currencyCode, { color: colors.text }]}>{item.currencyCode}</Text>
-        <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
+        <TouchableOpacity onPress={() => {
+          hapticService.selectionChanged();
+          navigation.navigate('AddMoney', { accountId: item.id, currencyCode: item.currencyCode });
+        }}>
           <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>

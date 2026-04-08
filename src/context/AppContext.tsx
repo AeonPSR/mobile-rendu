@@ -2,6 +2,8 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { User, Account, Transaction, Currency, AppState, LoadingState } from '@/models';
 import UserRepository from '@/repositories/userRepository';
 import AccountRepository from '@/repositories/accountRepository';
+import TransactionRepository from '@/repositories/transactionRepository';
+import ExchangeRateRepository from '@/repositories/exchangeRateRepository';
 
 // Action types
 type AppAction = 
@@ -88,6 +90,16 @@ interface AppContextType {
   loadUserAccounts: (userId: string) => Promise<void>;
   createAccount: (currencyCode: string) => Promise<boolean>;
   
+  // Transaction actions
+  createTopUp: (accountId: string, amount: number, description?: string) => Promise<boolean>;
+  createTransfer: (fromAccountId: string, toAccountId: string, amount: number, description?: string) => Promise<boolean>;
+  createConversion: (fromAccountId: string, toAccountId: string, fromAmount: number, exchangeRate: number) => Promise<boolean>;
+  loadUserTransactions: (userId: string) => Promise<void>;
+  
+  // Exchange rate actions
+  getExchangeRate: (fromCurrency: string, toCurrency: string) => Promise<number | null>;
+  convertAmount: (amount: number, fromCurrency: string, toCurrency: string) => Promise<number | null>;
+  
   // UI helpers
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -123,6 +135,10 @@ export function AppProvider({ children }: AppProviderProps) {
       
       dispatch({ type: 'SET_USER', payload: guestUser });
       dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+      
+      // Create guest accounts
+      await ensureDefaultAccounts(guestUser.id);
+      
       dispatch({ type: 'SET_LOADING', payload: false });
       return true;
     }
@@ -136,6 +152,9 @@ export function AppProvider({ children }: AppProviderProps) {
         
         // Load user accounts after successful sign in
         await loadUserAccounts(result.data.id);
+        
+        // Always ensure default accounts exist (will skip if they already exist)
+        await ensureDefaultAccounts(result.data.id);
         
         dispatch({ type: 'SET_LOADING', payload: false });
         return true;
@@ -284,6 +303,103 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
+  // Transaction actions
+  const createTopUp = async (accountId: string, amount: number, description?: string): Promise<boolean> => {
+    if (!state.user) return false;
+    
+    try {
+      const result = await TransactionRepository.createTopUp(accountId, amount, description);
+      
+      if (result.success && result.data) {
+        dispatch({ type: 'ADD_TRANSACTION', payload: result.data });
+        // Refresh accounts to update balances
+        await loadUserAccounts(state.user.id);
+        return true;
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to create top-up' });
+        return false;
+      }
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Network error during top-up' });
+      return false;
+    }
+  };
+
+  const createTransfer = async (fromAccountId: string, toAccountId: string, amount: number, description?: string): Promise<boolean> => {
+    if (!state.user) return false;
+    
+    try {
+      const result = await TransactionRepository.createTransfer(fromAccountId, toAccountId, amount, description);
+      
+      if (result.success && result.data) {
+        dispatch({ type: 'ADD_TRANSACTION', payload: result.data });
+        // Refresh accounts to update balances
+        await loadUserAccounts(state.user.id);
+        return true;
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to create transfer' });
+        return false;
+      }
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Network error during transfer' });
+      return false;
+    }
+  };
+
+  const createConversion = async (fromAccountId: string, toAccountId: string, fromAmount: number, exchangeRate: number): Promise<boolean> => {
+    if (!state.user) return false;
+    
+    try {
+      const result = await TransactionRepository.createConversion(fromAccountId, toAccountId, fromAmount, exchangeRate);
+      
+      if (result.success && result.data) {
+        dispatch({ type: 'ADD_TRANSACTION', payload: result.data });
+        // Refresh accounts to update balances
+        await loadUserAccounts(state.user.id);
+        return true;
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to create conversion' });
+        return false;
+      }
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Network error during conversion' });
+      return false;
+    }
+  };
+
+  const loadUserTransactions = async (userId: string): Promise<void> => {
+    try {
+      const result = await TransactionRepository.getUserTransactions(userId);
+      
+      if (result.success && result.data) {
+        dispatch({ type: 'SET_TRANSACTIONS', payload: result.data });
+      } else {
+        console.error('Failed to load transactions:', result.error);
+      }
+    } catch (error) {
+      console.error('Network error loading transactions:', error);
+    }
+  };
+
+  // Exchange rate actions
+  const getExchangeRate = async (fromCurrency: string, toCurrency: string): Promise<number | null> => {
+    try {
+      return await ExchangeRateRepository.getExchangeRate(fromCurrency, toCurrency);
+    } catch (error) {
+      console.error('Error getting exchange rate:', error);
+      return null;
+    }
+  };
+
+  const convertAmount = async (amount: number, fromCurrency: string, toCurrency: string): Promise<number | null> => {
+    try {
+      return await ExchangeRateRepository.calculateConversion(amount, fromCurrency, toCurrency);
+    } catch (error) {
+      console.error('Error converting amount:', error);
+      return null;
+    }
+  };
+
   // UI helpers
   const setLoading = (loading: boolean) => {
     dispatch({ type: 'SET_LOADING', payload: loading });
@@ -306,6 +422,12 @@ export function AppProvider({ children }: AppProviderProps) {
     checkAuthStatus,
     loadUserAccounts,
     createAccount,
+    createTopUp,
+    createTransfer,
+    createConversion,
+    loadUserTransactions,
+    getExchangeRate,
+    convertAmount,
     setLoading,
     setError,
     clearError,

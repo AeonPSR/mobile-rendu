@@ -7,8 +7,7 @@ import { useTheme } from '@/context/ThemeContext';
 // Import screens
 import WalletScreen from '@/screens/WalletScreen';
 import TransactionsScreen from '@/screens/TransactionsScreen';
-import ConversionScreen from '@/screens/ConversionScreen';
-import SettingsScreen from '@/screens/SettingsScreen';
+
 import TransactionDetailScreen from '@/screens/TransactionDetailScreen';
 import AddMoneyScreen from '@/screens/AddMoneyScreen';
 import TransferScreen from '@/screens/TransferScreen';
@@ -17,8 +16,6 @@ import TransferScreen from '@/screens/TransferScreen';
 export type MainTabParamList = {
   WalletTab: undefined;
   TransactionsTab: undefined;
-  ConvertTab: undefined;
-  SettingsTab: undefined;
 };
 
 export type WalletStackParamList = {
@@ -32,19 +29,12 @@ export type TransactionStackParamList = {
   TransactionDetail: { transactionId: string };
 };
 
-export type ConversionStackParamList = {
-  Conversion: undefined;
-};
 
-export type SettingsStackParamList = {
-  Settings: undefined;
-};
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const WalletStack = createStackNavigator<WalletStackParamList>();
 const TransactionStack = createStackNavigator<TransactionStackParamList>();
-const ConversionStack = createStackNavigator<ConversionStackParamList>();
-const SettingsStack = createStackNavigator<SettingsStackParamList>();
+
 
 // Stack Navigators
 function WalletNavigator() {
@@ -115,43 +105,7 @@ function TransactionsNavigator() {
   );
 }
 
-function ConversionNavigator() {
-  const { colors } = useTheme();
-  
-  return (
-    <ConversionStack.Navigator>
-      <ConversionStack.Screen 
-        name="Conversion" 
-        component={ConversionScreen}
-        options={{ 
-          title: 'Convert Currency',
-          headerStyle: { backgroundColor: colors.background },
-          headerTitleStyle: { color: colors.text },
-          headerTintColor: colors.primary,
-        }}
-      />
-    </ConversionStack.Navigator>
-  );
-}
 
-function SettingsNavigator() {
-  const { colors } = useTheme();
-  
-  return (
-    <SettingsStack.Navigator>
-      <SettingsStack.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{ 
-          title: 'Settings',
-          headerStyle: { backgroundColor: colors.background },
-          headerTitleStyle: { color: colors.text },
-          headerTintColor: colors.primary,
-        }}
-      />
-    </SettingsStack.Navigator>
-  );
-}
 
 // Main Tab Navigator
 export default function MainNavigator() {
@@ -171,12 +125,6 @@ export default function MainNavigator() {
               break;
             case 'TransactionsTab':
               iconName = focused ? 'list' : 'list-outline';
-              break;
-            case 'ConvertTab':
-              iconName = focused ? 'swap-horizontal' : 'swap-horizontal-outline';
-              break;
-            case 'SettingsTab':
-              iconName = focused ? 'settings' : 'settings-outline';
               break;
             default:
               iconName = 'help-outline';
@@ -202,16 +150,7 @@ export default function MainNavigator() {
         component={TransactionsNavigator}
         options={{ tabBarLabel: 'Transactions' }}
       />
-      <Tab.Screen
-        name="ConvertTab"
-        component={ConversionNavigator}
-        options={{ tabBarLabel: 'Convert' }}
-      />
-      <Tab.Screen
-        name="SettingsTab"
-        component={SettingsNavigator}
-        options={{ tabBarLabel: 'Settings' }}
-      />
+
     </Tab.Navigator>
   );
 }

@@ -32,6 +32,23 @@ export class AccountRepository {
    * Get all accounts for a specific user
    */
   async getUserAccounts(userId: string): Promise<ApiResponse<Account[]>> {
+    // Guest mode - load from localStorage
+    if (userId === 'guest-user') {
+      try {
+        const cachedAccounts = await LocalStorage.getItem<Account[]>(`${this.CACHE_KEY}_guest-user`);
+        return {
+          success: true,
+          data: cachedAccounts || [],
+        };
+      } catch (error) {
+        return {
+          success: true,
+          data: [], // Return empty array for guest if no cached data
+        };
+      }
+    }
+
+    // Regular database mode
     try {
       const client = SupabaseService.getClient();
       
@@ -109,6 +126,50 @@ export class AccountRepository {
    * Create a new account for a user in a specific currency
    */
   async createAccount(request: CreateAccountRequest): Promise<ApiResponse<Account>> {
+    // Guest mode - create mock account in localStorage
+    if (request.user_id === 'guest-user') {
+      try {
+        // Load existing guest accounts
+        const existingAccounts = await LocalStorage.getItem<Account[]>(`${this.CACHE_KEY}_guest-user`) || [];
+        
+        // Check if account already exists
+        const existingAccount = existingAccounts.find(acc => acc.currencyCode === request.currency_code);
+        if (existingAccount) {
+          return {
+            success: false,
+            error: `Account already exists for ${request.currency_code}`,
+          };
+        }
+        
+        // Create new guest account
+        const newAccount: Account = {
+          id: `guest-account-${request.currency_code.toLowerCase()}`,
+          userId: 'guest-user',
+          currencyCode: request.currency_code,
+          balance: request.initial_balance || 0,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        
+        // Add to existing accounts and save
+        const updatedAccounts = [...existingAccounts, newAccount];
+        await LocalStorage.setItem(`${this.CACHE_KEY}_guest-user`, updatedAccounts);
+        
+        return {
+          success: true,
+          data: newAccount,
+          message: `Created guest ${request.currency_code} account`,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to create guest account',
+        };
+      }
+    }
+
+    // Regular database mode
     try {
       const client = SupabaseService.getClient();
 
@@ -193,26 +254,91 @@ export class AccountRepository {
    * Update account balance
    */
   async updateBalance(request: UpdateBalanceRequest): Promise<ApiResponse<Account>> {
+    // Guest mode - update balance in localStorage
+    if (request.account_id.startsWith('guest-account-')) {
+      try {
+        const existingAccounts = await LocalStorage.getItem<Account[]>(`${this.CACHE_KEY}_guest-user`) || [];
+        const accountIndex = existingAccounts.findIndex(acc => acc.id === request.account_id);
+        
+        if (accountIndex === -1) {
+          return {
+            success: false,
+            error: 'Guest account not found',
+          };
+        }
+        
+        const account = existingAccounts[accountIndex];
+        let newBalance = account.balance;
+        
+        if (request.operation_type === 'add') {
+          newBalance = account.balance + request.new_balance;
+        } else if (request.operation_type === 'subtract') {
+          newBalance = Math.max(account.balance - request.new_balance, 0);
+        } else {
+          newBalance = request.new_balance;
+        }
+        
+        // Update the account
+        const updatedAccount = { ...account, balance: newBalance, updatedAt: new Date() };
+        existingAccounts[accountIndex] = updatedAccount;
+        
+        // Save back to localStorage
+        await LocalStorage.setItem(`${this.CACHE_KEY}_guest-user`, existingAccounts);
+        
+        return {
+          success: true,
+          data: updatedAccount,
+          message: `Updated guest account balance to ${newBalance}`,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to update guest account balance',
+        };
+      }
+    }
+
+    // Regular database mode
     try {
       const client = SupabaseService.getClient();
 
       let updateQuery;
       
       if (request.operation_type === 'add') {
-        // Add to current balance
+        // Fetch current balance first
+        const { data: currentAccount, error: fetchError } = await client
+          .from(this.TABLE_NAME)
+          .select('balance')
+          .eq('id', request.account_id)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const newBalance = (currentAccount?.balance || 0) + request.new_balance;
+        
         updateQuery = client
           .from(this.TABLE_NAME)
           .update({ 
-            balance: client.sql`balance + ${request.new_balance}`,
+            balance: newBalance,
             updated_at: new Date().toISOString(),
           })
           .eq('id', request.account_id);
       } else if (request.operation_type === 'subtract') {
-        // Subtract from current balance (with check for non-negative)
+        // Fetch current balance first
+        const { data: currentAccount, error: fetchError } = await client
+          .from(this.TABLE_NAME)
+          .select('balance')
+          .eq('id', request.account_id)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const newBalance = Math.max((currentAccount?.balance || 0) - request.new_balance, 0);
+        
         updateQuery = client
           .from(this.TABLE_NAME)
           .update({ 
-            balance: client.sql`GREATEST(balance - ${request.new_balance}, 0)`,
+            balance: newBalance,
             updated_at: new Date().toISOString(),
           })
           .eq('id', request.account_id);
@@ -286,6 +412,20 @@ export class AccountRepository {
    * Get specific account by ID
    */
   async getAccountById(accountId: string): Promise<ApiResponse<Account>> {
+    // Guest mode - look up from localStorage
+    if (accountId.startsWith('guest-account-')) {
+      try {
+        const existingAccounts = await LocalStorage.getItem<Account[]>(`${this.CACHE_KEY}_guest-user`) || [];
+        const account = existingAccounts.find(acc => acc.id === accountId);
+        if (account) {
+          return { success: true, data: account };
+        }
+        return { success: false, error: 'Guest account not found' };
+      } catch (error) {
+        return { success: false, error: 'Failed to fetch guest account' };
+      }
+    }
+
     try {
       const client = SupabaseService.getClient();
       
@@ -346,6 +486,36 @@ export class AccountRepository {
    * Create default accounts for new user (USD, EUR, CNY)
    */
   async createDefaultAccounts(userId: string): Promise<ApiResponse<Account[]>> {
+    // Guest mode - create mock accounts in localStorage
+    if (userId === 'guest-user') {
+      const defaultCurrencies = ['USD', 'EUR', 'CNY'];
+      const guestAccounts: Account[] = defaultCurrencies.map(currency => ({
+        id: `guest-account-${currency.toLowerCase()}`,
+        userId: 'guest-user',
+        currencyCode: currency,
+        balance: 0,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
+      // Store in localStorage for guest mode
+      try {
+        await LocalStorage.setItem(`${this.CACHE_KEY}_guest-user`, guestAccounts);
+        return {
+          success: true,
+          data: guestAccounts,
+          message: `Created ${guestAccounts.length} guest accounts`,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to create guest accounts',
+        };
+      }
+    }
+
+    // Regular database mode for real users
     const defaultCurrencies = ['USD', 'EUR', 'CNY'];
     const createdAccounts: Account[] = [];
     const errors: string[] = [];

@@ -33,31 +33,33 @@ export interface Account {
 export interface Transaction {
   id: string;
   userId: string;
-  fromAccountId?: string; // null for top-ups
-  toAccountId?: string;   // null for withdrawals
+  // Source account (null for external top-ups)
+  fromAccountId?: string;
+  fromAmount?: number;
+  fromCurrency?: string;
+  // Destination account (null for external withdrawals)  
+  toAccountId?: string;
+  toAmount?: number;
+  toCurrency?: string;
+  // Transaction details
   type: TransactionType;
-  amount: number;
-  currency: string;
   exchangeRate?: number; // For conversion transactions
   description?: string;
+  referenceId?: string; // External reference
   status: TransactionStatus;
-  location?: GeoLocation;
-  receiptImage?: string; // Base64 or image URL
+  metadata?: any; // Additional data as JSON
   createdAt: Date;
-  processedAt?: Date;
 }
 
 export enum TransactionType {
-  TOP_UP = 'top_up',
   TRANSFER = 'transfer',
-  CONVERSION = 'conversion',
-  WITHDRAWAL = 'withdrawal',
-  PAYMENT = 'payment'
+  CONVERSION = 'conversion', 
+  TOP_UP = 'top_up',
+  WITHDRAWAL = 'withdrawal'
 }
 
 export enum TransactionStatus {
   PENDING = 'pending',
-  PROCESSING = 'processing',
   COMPLETED = 'completed',
   FAILED = 'failed',
   CANCELLED = 'cancelled'

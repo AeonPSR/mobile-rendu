@@ -1,41 +1,117 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, Spacing } from '@/utils/config';
 import { useTheme } from '@/context/ThemeContext';
+import { useApp } from '@/context/AppContext';
+import { hapticService } from '@/services/hapticService';
 
 export default function TransactionsScreen() {
   const { colors } = useTheme();
+  const { state, loadUserTransactions } = useApp();
   
-  const mockTransactions = [
-    { id: '1', type: 'Conversion', amount: '+¥1,014.902', time: '16:35 PM', isPositive: true },
-    { id: '2', type: 'Transfer', amount: '-$253.62', time: '15:20 PM', isPositive: false },
-    { id: '3', type: 'Top-up', amount: '+$100.00', time: '14:15 PM', isPositive: true },
-  ];
-
-  const renderTransaction = ({ item }: { item: any }) => (
-    <TouchableOpacity style={[styles.transactionItem, { backgroundColor: colors.surface }]}>
-      <View style={styles.transactionInfo}>
-        <Text style={[styles.transactionType, { color: colors.text }]}>{item.type}</Text>
-        <Text style={[styles.transactionTime, { color: colors.textSecondary }]}>{item.time}</Text>
-      </View>
-      <Text style={[
-        styles.transactionAmount, 
-        { color: item.isPositive ? colors.success : colors.error }
-      ]}>
-        {item.amount}
-      </Text>
-    </TouchableOpacity>
-  );
+  useEffect(() => {
+    // Load transactions when screen mounts
+    if (state.user) {
+      loadUserTransactions(state.user.id);
+    }
+  }, [state.user]);
+  
+  const transactions = state.transactions || [];
+  
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'TOP_UP': return 'add-circle';
+      case 'TRANSFER': return 'swap-horizontal';
+      case 'CONVERSION': return 'refresh';
+      default: return 'help-circle';
+    }
+  };
+  
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'TOP_UP': return colors.success;
+      case 'TRANSFER': return colors.primary;
+      case 'CONVERSION': return colors.warning;
+      default: return colors.textSecondary;
+    }
+  };
+  
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'TOP_UP': return 'Money Added';
+      case 'TRANSFER': return 'Transfer';
+      case 'CONVERSION': return 'Currency Conversion';
+      default: return 'Transaction';
+    }
+  };
+  
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  const formatTransactionAmount = (transaction: any) => {
+    if (transaction.type === 'TOP_UP') {
+      return `+$${transaction.toAmount || transaction.amount}`;
+    } else if (transaction.type === 'TRANSFER') {
+      return `$${transaction.fromAmount || transaction.amount}`;
+    } else if (transaction.type === 'CONVERSION') {
+      return `${transaction.fromAmount} → ${transaction.toAmount}`;
+    }
+    return `$${transaction.amount || '0.00'}`;
+  };
+  
+  const getAmountColor = (transaction: any) => {
+    if (transaction.type === 'TOP_UP') return colors.success;
+    return colors.text;
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
-        data={mockTransactions}
-        renderItem={renderTransaction}
-        keyExtractor={(item) => item.id}
+        data={transactions}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={[styles.transactionItem, { borderBottomColor: colors.border }]}
+            onPress={() => hapticService.selectionChanged()}
+          >
+            <View style={styles.transactionLeft}>
+              <View style={[styles.typeIcon, { backgroundColor: getTypeColor(item.type) }]}>
+                <Ionicons 
+                  name={getTypeIcon(item.type)} 
+                  size={16} 
+                  color="white" 
+                />
+              </View>
+              <View>
+                <Text style={[styles.transactionDescription, { color: colors.text }]}>
+                  {item.description || getTypeLabel(item.type)}
+                </Text>
+                <Text style={[styles.transactionDate, { color: colors.textSecondary }]}>
+                  {formatDate(item.createdAt)}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.transactionAmount, { color: getAmountColor(item) }]}>
+              {formatTransactionAmount(item)}
+            </Text>
+          </TouchableOpacity>
+        )}
         style={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              No transactions yet
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -49,11 +125,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: Spacing.md,
-    borderRadius: 12,
+    borderBottomWidth: 1,
     marginVertical: Spacing.sm,
   },
-  transactionInfo: { flex: 1 },
-  transactionType: { fontSize: 16, fontFamily: Fonts.medium },
-  transactionTime: { fontSize: 14, fontFamily: Fonts.regular },
+  transactionLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  typeIcon: { 
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: Spacing.sm 
+  },
+  transactionDescription: { fontSize: 16, fontFamily: Fonts.medium },
+  transactionDate: { fontSize: 14, fontFamily: Fonts.regular, marginTop: 2 },
   transactionAmount: { fontSize: 16, fontFamily: Fonts.semibold },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
+  emptyText: { fontSize: 16, fontFamily: Fonts.regular },
 });

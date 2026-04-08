@@ -1,15 +1,96 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts, Spacing } from '@/utils/config';
 import { useTheme } from '@/context/ThemeContext';
+import { useApp } from '@/context/AppContext';
 import { hapticService } from '@/services/hapticService';
+
+// Cross-platform alert
+const showAlert = (title: string, message: string) => {
+  if (Platform.OS === 'web') {
+    console.log(`${title}: ${message}`);
+    alert(`${title}: ${message}`);
+  } else {
+    Alert.alert(title, message);
+  }
+};
 
 export default function ConversionScreen() {
   const { colors } = useTheme();
+  const { state, createConversion, getExchangeRate } = useApp();
   const [amount, setAmount] = useState('140.00');
   const [convertedAmount, setConvertedAmount] = useState('1014.902');
+  const [loading, setLoading] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState(7.25);
+  
+  // For simplicity, using first two accounts as from/to
+  const accounts = state.accounts || [];
+  const fromAccount = accounts.find((acc: any) => acc.currencyCode === 'USD');
+  const toAccount = accounts.find((acc: any) => acc.currencyCode === 'CNY');
+  
+  useEffect(() => {
+    loadExchangeRate();
+  }, []);
+  
+  const loadExchangeRate = async () => {
+    if (fromAccount && toAccount) {
+      const rate = await getExchangeRate(fromAccount.currencyCode, toAccount.currencyCode);
+      if (rate) {
+        setExchangeRate(rate);
+        updateConvertedAmount(amount, rate);
+      }
+    }
+  };
+  
+  const updateConvertedAmount = (inputAmount: string, rate: number) => {
+    const numAmount = parseFloat(inputAmount) || 0;
+    setConvertedAmount((numAmount * rate).toFixed(3));
+  };
+  
+  const handleContinue = async () => {
+    if (!fromAccount || !toAccount) {
+      showAlert('Error', 'Currency accounts not available');
+      return;
+    }
+    
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      showAlert('Error', 'Please enter a valid amount');
+      return;
+    }
+    
+    if (numAmount > fromAccount.balance) {
+      showAlert('Error', 'Insufficient balance');
+      return;
+    }
+    
+    console.log('Converting:', { fromAccountId: fromAccount.id, toAccountId: toAccount.id, amount: numAmount, rate: exchangeRate });
+    setLoading(true);
+    hapticService.impactLight();
+    
+    try {
+      const success = await createConversion(fromAccount.id, toAccount.id, numAmount, exchangeRate);
+      
+      setLoading(false);
+      
+      if (success) {
+        hapticService.notificationSuccess();
+        showAlert('Success', `Converted $${numAmount} to ¥${convertedAmount}`);
+        setAmount('0.00');
+        setConvertedAmount('0.000');
+      } else {
+        hapticService.notificationError();
+        showAlert('Error', 'Failed to convert currency - check console for details');
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error('Error in handleContinue:', error);
+      hapticService.notificationError();
+      showAlert('Error', 'Network error - check console for details');
+    }
+  };
 
   const keypadNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'];
 
@@ -51,7 +132,9 @@ export default function ConversionScreen() {
           <Ionicons name="chevron-down" size={20} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.amount, { color: colors.text }]}>{amount}</Text>
-        <Text style={[styles.balance, { color: colors.textSecondary }]}>Balance: $150.56</Text>
+        <Text style={[styles.balance, { color: colors.textSecondary }]}>
+          Balance: ${fromAccount?.balance || 0}
+        </Text>
       </View>
 
       <TouchableOpacity 
@@ -70,7 +153,9 @@ export default function ConversionScreen() {
           <Ionicons name="chevron-down" size={20} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.amount, { color: colors.text }]}>{convertedAmount}</Text>
-        <Text style={[styles.balance, { color: colors.textSecondary }]}>Balance: ¥246.63</Text>
+        <Text style={[styles.balance, { color: colors.textSecondary }]}>
+          Balance: ¥{toAccount?.balance || 0}
+        </Text>
       </View>
 
       <View style={styles.keypad}>
@@ -78,10 +163,17 @@ export default function ConversionScreen() {
       </View>
 
       <TouchableOpacity 
-        style={[styles.continueButton, { backgroundColor: colors.primary }]}
-        onPress={() => hapticService.notificationSuccess()}
+        style={[
+          styles.continueButton, 
+          { backgroundColor: colors.primary },
+          loading && { opacity: 0.6 }
+        ]}
+        onPress={handleContinue}
+        disabled={loading}
       >
-        <Text style={[styles.continueText, { color: colors.surface }]}>Continue</Text>
+        <Text style={[styles.continueText, { color: colors.surface }]}>
+          {loading ? 'Converting...' : 'Continue'}
+        </Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
