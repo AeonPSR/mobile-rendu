@@ -6,6 +6,7 @@ import { Fonts, Spacing } from '@/utils/config';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { hapticService } from '@/services/hapticService';
+import NotificationService from '@/services/notificationService';
 
 // Cross-platform alert
 const showAlert = (title: string, message: string) => {
@@ -77,6 +78,10 @@ export default function ConversionScreen() {
       
       if (success) {
         hapticService.notificationSuccess();
+        NotificationService.sendLocalNotification(
+          'Conversion Complete',
+          `Converted $${numAmount} to ¥${convertedAmount}`
+        );
         showAlert('Success', `Converted $${numAmount} to ¥${convertedAmount}`);
         setAmount('0.00');
         setConvertedAmount('0.000');

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Modal,
+  Alert,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +19,7 @@ import { Fonts, Spacing } from '@/utils/config';
 import { useApp } from '@/context/AppContext';
 import { useTheme } from '@/context/ThemeContext';
 import { hapticService } from '@/services/hapticService';
-import { formatCurrency, getCurrencyFlag } from '@/utils/helpers';
+import { formatCurrency, getCurrencyFlag, getCurrencySymbol } from '@/utils/helpers';
 
 type WalletScreenNavigationProp = StackNavigationProp<WalletStackParamList, 'Wallet'>;
 
@@ -25,12 +29,45 @@ interface Props {
 
 
 export default function WalletScreen({ navigation }: Props) {
-  const { state } = useApp();
+  const { state, createAccount } = useApp();
   const { colors } = useTheme();
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
   
   // Use real accounts from state
   const accounts = state.accounts || [];
   const primaryAccount = accounts.length > 0 ? accounts[0] : null;
+
+  const ALL_CURRENCIES = [
+    { code: 'USD', name: 'US Dollar' },
+    { code: 'EUR', name: 'Euro' },
+    { code: 'GBP', name: 'British Pound' },
+    { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'CNY', name: 'Chinese Yuan' },
+    { code: 'CAD', name: 'Canadian Dollar' },
+    { code: 'AUD', name: 'Australian Dollar' },
+  ];
+
+  const ownedCodes = accounts.map((a: any) => a.currencyCode);
+  const availableCurrencies = ALL_CURRENCIES.filter(c => !ownedCodes.includes(c.code));
+
+  const handleCreateWallet = async (currencyCode: string) => {
+    setCreatingAccount(true);
+    hapticService.impactLight();
+    const success = await createAccount(currencyCode);
+    setCreatingAccount(false);
+    setShowCurrencyModal(false);
+    if (success) {
+      hapticService.notificationSuccess();
+    } else {
+      hapticService.notificationError();
+      if (Platform.OS === 'web') {
+        alert('Failed to create wallet');
+      } else {
+        Alert.alert('Error', 'Failed to create wallet');
+      }
+    }
+  };
 
   const handleAddMoney = () => {
     hapticService.impactLight();
@@ -81,14 +118,59 @@ export default function WalletScreen({ navigation }: Props) {
 
         {/* Currency Cards */}
         <FlatList
-          data={accounts}
-          renderItem={renderAccountCard}
+          data={[...accounts, ...(availableCurrencies.length > 0 ? [{ id: '__add__' }] : [])]}
+          renderItem={({ item }) => {
+            if (item.id === '__add__') {
+              return (
+                <TouchableOpacity
+                  style={[styles.accountCard, styles.addWalletCard, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+                  onPress={() => { hapticService.selectionChanged(); setShowCurrencyModal(true); }}
+                >
+                  <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
+                  <Text style={[styles.addWalletLabel, { color: colors.primary }]}>New Wallet</Text>
+                </TouchableOpacity>
+              );
+            }
+            return renderAccountCard({ item });
+          }}
           keyExtractor={(item) => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.accountsList}
           contentContainerStyle={styles.accountsListContent}
         />
+
+        {/* Currency Picker Modal */}
+        <Modal visible={showCurrencyModal} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>  
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Add Wallet</Text>
+                <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              {creatingAccount ? (
+                <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 24 }} />
+              ) : (
+                availableCurrencies.map(c => (
+                  <TouchableOpacity
+                    key={c.code}
+                    style={[styles.currencyRow, { borderBottomColor: colors.border }]}
+                    onPress={() => handleCreateWallet(c.code)}
+                  >
+                    <Text style={styles.currencyFlag}>{getCurrencyFlag(c.code)}</Text>
+                    <View style={{ flex: 1, marginLeft: Spacing.sm }}>
+                      <Text style={[styles.currencyCode, { color: colors.text }]}>{c.code}</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{c.name}</Text>
+                    </View>
+                    <Text style={{ color: colors.textSecondary }}>{getCurrencySymbol(c.code)}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          </View>
+        </Modal>
 
         {/* Main Balance */}
         <View style={styles.balanceSection}>
@@ -213,5 +295,43 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 12,
     fontFamily: Fonts.medium,
+  },
+  addWalletCard: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
+  addWalletLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.medium,
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: Spacing.lg,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.semibold,
+  },
+  currencyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
 });

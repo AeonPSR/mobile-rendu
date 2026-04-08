@@ -6,6 +6,7 @@ import { Fonts, Spacing } from '@/utils/config';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { hapticService } from '@/services/hapticService';
+import NotificationService from '@/services/notificationService';
 
 type RootStackParamList = {
   AddMoney: { accountId?: string; currencyCode?: string };
@@ -74,6 +75,10 @@ export default function AddMoneyScreen() {
       
       if (success) {
         hapticService.notificationSuccess();
+        NotificationService.sendLocalNotification(
+          'Money Added',
+          `$${numAmount} added to your ${selectedAccount.currencyCode} wallet`
+        );
         showAlert('Success', `$${numAmount} added to your ${selectedAccount.currencyCode} wallet`);
         setAmount('');
       } else {

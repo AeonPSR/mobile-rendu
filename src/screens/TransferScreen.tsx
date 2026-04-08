@@ -5,6 +5,7 @@ import { Fonts, Spacing } from '@/utils/config';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { hapticService } from '@/services/hapticService';
+import NotificationService from '@/services/notificationService';
 
 // Cross-platform alert
 const showAlert = (title: string, message: string) => {
@@ -60,6 +61,10 @@ export default function TransferScreen() {
       
       if (success) {
         hapticService.notificationSuccess();
+        NotificationService.sendLocalNotification(
+          'Transfer Complete',
+          `$${numAmount} transferred successfully`
+        );
         showAlert('Success', `$${numAmount} transferred successfully`);
         setAmount('');
       } else {

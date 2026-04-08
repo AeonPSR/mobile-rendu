@@ -1,11 +1,12 @@
-// Fallback haptic service that doesn't require expo-haptics
-// This prevents dependency conflicts while maintaining the same API
+import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
+
+const isNative = Platform.OS === 'ios' || Platform.OS === 'android';
+
 export class HapticService {
   static async light() {
     try {
-      // Future: Add expo-haptics when dependencies are resolved
-      // await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      console.log('Haptic: Light impact');
+      if (isNative) await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
@@ -13,8 +14,7 @@ export class HapticService {
 
   static async medium() {
     try {
-      // Future: await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      console.log('Haptic: Medium impact');
+      if (isNative) await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
@@ -22,8 +22,7 @@ export class HapticService {
 
   static async heavy() {
     try {
-      // Future: await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      console.log('Haptic: Heavy impact');
+      if (isNative) await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
@@ -31,8 +30,7 @@ export class HapticService {
 
   static async success() {
     try {
-      // Future: await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      console.log('Haptic: Success notification');
+      if (isNative) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
@@ -40,8 +38,7 @@ export class HapticService {
 
   static async warning() {
     try {
-      // Future: await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      console.log('Haptic: Warning notification');
+      if (isNative) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
@@ -49,8 +46,7 @@ export class HapticService {
 
   static async error() {
     try {
-      // Future: await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      console.log('Haptic: Error notification');
+      if (isNative) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
@@ -58,8 +54,7 @@ export class HapticService {
 
   static async selection() {
     try {
-      // Future: await Haptics.selectionAsync();
-      console.log('Haptic: Selection changed');
+      if (isNative) await Haptics.selectionAsync();
     } catch (error) {
       console.warn('Haptic feedback not available:', error);
     }
