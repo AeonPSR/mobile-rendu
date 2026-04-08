@@ -11,24 +11,23 @@ export interface User {
 }
 
 export interface Currency {
-  id: string;
   code: string; // USD, EUR, CNY, etc.
   name: string; // US Dollar, Euro, Chinese Yuan
   symbol: string; // $, €, ¥
-  flag?: string; // Country flag emoji or image URL
-  exchangeRate: number; // Rate relative to base currency (USD)
-  lastUpdated: Date;
+  flag?: string; // Country flag emoji
+  decimalPlaces?: number; // Number of decimal places for currency
 }
 
 export interface Account {
   id: string;
   userId: string;
-  currencyId: string;
+  currencyCode: string; // Direct currency code (USD, EUR, etc.)
   balance: number;
-  name?: string; // e.g., "My USD Account", "Travel Fund EUR"
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Optional populated currency details
+  currency?: Currency;
 }
 
 export interface Transaction {

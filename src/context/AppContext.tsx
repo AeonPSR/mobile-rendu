@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { User, Account, Transaction, Currency, AppState, LoadingState } from '@/models';
 import UserRepository from '@/repositories/userRepository';
+import AccountRepository from '@/repositories/accountRepository';
 
 // Action types
 type AppAction = 
@@ -83,6 +84,10 @@ interface AppContextType {
   signOut: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
   
+  // Account actions
+  loadUserAccounts: (userId: string) => Promise<void>;
+  createAccount: (currencyCode: string) => Promise<boolean>;
+  
   // UI helpers
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -125,9 +130,13 @@ export function AppProvider({ children }: AppProviderProps) {
     try {
       const result = await UserRepository.signIn(email, password);
       
-      if (result.success) {
+      if (result.success && result.data) {
         dispatch({ type: 'SET_USER', payload: result.data });
         dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+        
+        // Load user accounts after successful sign in
+        await loadUserAccounts(result.data.id);
+        
         dispatch({ type: 'SET_LOADING', payload: false });
         return true;
       } else {
@@ -164,9 +173,13 @@ export function AppProvider({ children }: AppProviderProps) {
     try {
       const result = await UserRepository.createUser(email, password, firstName, lastName);
       
-      if (result.success) {
+      if (result.success && result.data) {
         dispatch({ type: 'SET_USER', payload: result.data });
         dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+        
+        // Create default accounts for new user and load them
+        await ensureDefaultAccounts(result.data.id);
+        
         dispatch({ type: 'SET_LOADING', payload: false });
         return true;
       } else {
@@ -199,9 +212,12 @@ export function AppProvider({ children }: AppProviderProps) {
       
       if (isAuth) {
         const result = await UserRepository.getCurrentUser();
-        if (result.success) {
+        if (result.success && result.data) {
           dispatch({ type: 'SET_USER', payload: result.data });
           dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+          
+          // Load user accounts
+          await loadUserAccounts(result.data.id);
         } else {
           dispatch({ type: 'SET_AUTHENTICATED', payload: false });
         }
@@ -216,6 +232,58 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
   
+  // Account management methods
+  const loadUserAccounts = async (userId: string): Promise<void> => {
+    try {
+      const result = await AccountRepository.getUserAccounts(userId);
+      if (result.success) {
+        dispatch({ type: 'SET_ACCOUNTS', payload: result.data || [] });
+      } else {
+        console.warn('Failed to load user accounts:', result.error);
+        dispatch({ type: 'SET_ACCOUNTS', payload: [] });
+      }
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+      dispatch({ type: 'SET_ACCOUNTS', payload: [] });
+    }
+  };
+
+  const ensureDefaultAccounts = async (userId: string): Promise<void> => {
+    try {
+      const result = await AccountRepository.createDefaultAccounts(userId);
+      if (result.success) {
+        // Refresh accounts list
+        await loadUserAccounts(userId);
+      }
+    } catch (error) {
+      console.warn('Error creating default accounts:', error);
+    }
+  };
+
+  const createAccount = async (currencyCode: string): Promise<boolean> => {
+    if (!state.user) return false;
+    
+    try {
+      const result = await AccountRepository.createAccount({
+        user_id: state.user.id,
+        currency_code: currencyCode,
+        initial_balance: 0,
+      });
+      
+      if (result.success) {
+        // Refresh accounts list
+        await loadUserAccounts(state.user.id);
+        return true;
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: result.error || 'Failed to create account' });
+        return false;
+      }
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Network error creating account' });
+      return false;
+    }
+  };
+
   // UI helpers
   const setLoading = (loading: boolean) => {
     dispatch({ type: 'SET_LOADING', payload: loading });
@@ -236,6 +304,8 @@ export function AppProvider({ children }: AppProviderProps) {
     signUp,
     signOut,
     checkAuthStatus,
+    loadUserAccounts,
+    createAccount,
     setLoading,
     setError,
     clearError,

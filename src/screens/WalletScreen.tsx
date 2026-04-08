@@ -23,13 +23,6 @@ interface Props {
   navigation: WalletScreenNavigationProp;
 }
 
-// Mock data for demonstration
-const mockAccounts = [
-  { id: '1', currency: 'USD', balance: 150.56, flag: '🇺🇸' },
-  { id: '2', currency: 'CNY', balance: 1014.902, flag: '🇨🇳' },
-  { id: '3', currency: 'EUR', balance: 0, flag: '🇪🇺' },
-];
-
 const mockTransactions = [
   {
     id: '1',
@@ -68,7 +61,10 @@ const mockTransactions = [
 export default function WalletScreen({ navigation }: Props) {
   const { state } = useApp();
   const { colors } = useTheme();
-  const primaryAccount = mockAccounts[0]; // USD account as primary
+  
+  // Use real accounts from state
+  const accounts = state.accounts || [];
+  const primaryAccount = accounts.length > 0 ? accounts[0] : null;
 
   const handleAddMoney = () => {
     hapticService.impactLight();
@@ -83,14 +79,14 @@ export default function WalletScreen({ navigation }: Props) {
   const renderAccountCard = ({ item }: { item: any }) => (
     <View style={[styles.accountCard, { backgroundColor: colors.surface }]}>
       <View style={styles.accountHeader}>
-        <Text style={styles.currencyFlag}>{item.flag}</Text>
-        <Text style={[styles.currencyCode, { color: colors.text }]}>{item.currency}</Text>
+        <Text style={styles.currencyFlag}>{item.currency?.flag || getCurrencyFlag(item.currencyCode)}</Text>
+        <Text style={[styles.currencyCode, { color: colors.text }]}>{item.currencyCode}</Text>
         <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
           <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
       <Text style={[styles.accountBalance, { color: colors.text }]}>
-        {formatCurrency(item.balance, item.currency)}
+        {formatCurrency(item.balance, item.currencyCode)}
       </Text>
     </View>
   );
@@ -134,7 +130,7 @@ export default function WalletScreen({ navigation }: Props) {
 
         {/* Currency Cards */}
         <FlatList
-          data={mockAccounts}
+          data={accounts}
           renderItem={renderAccountCard}
           keyExtractor={(item) => item.id}
           horizontal
@@ -147,7 +143,10 @@ export default function WalletScreen({ navigation }: Props) {
         <View style={styles.balanceSection}>
           <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>Balance</Text>
           <Text style={[styles.balanceAmount, { color: colors.text }]}>
-            {formatCurrency(primaryAccount.balance, primaryAccount.currency)}
+            {primaryAccount ? 
+              formatCurrency(primaryAccount.balance, primaryAccount.currencyCode) : 
+              'No accounts yet'
+            }
           </Text>
         </View>
 

@@ -20,11 +20,12 @@
 - [x] Test database connections and queries
 
 ### Repository Implementation 
-- [ ] `AccountRepository` - CRUD for user accounts
-  - [ ] `getUserAccounts()` - get all accounts for user
-  - [ ] `createAccount()` - create new currency account
-  - [ ] `updateBalance()` - update account balance
-  - [ ] `getAccountBalance()` - get specific account balance
+- [x] `AccountRepository` - CRUD for user accounts
+  - [x] `getUserAccounts()` - get all accounts for user
+  - [x] `createAccount()` - create new currency account
+  - [x] `updateBalance()` - update account balance
+  - [x] `getAccountById()` - get specific account by ID
+  - [x] `createDefaultAccounts()` - auto-create USD/EUR/CNY accounts
 - [ ] `TransactionRepository` - transaction management
   - [ ] `createTransaction()` - record new transaction
   - [ ] `getUserTransactions()` - get transaction history
@@ -32,7 +33,10 @@
 - [ ] `ExchangeRateRepository` - currency rate management
   - [ ] `getExchangeRate()` - get rate between currencies
   - [ ] `updateExchangeRates()` - fetch latest rates
-- [ ] Integrate repositories with AppContext
+- [x] Integrate repositories with AppContext
+  - [x] Added account management methods to AppContext
+  - [x] Auto-load accounts on sign in/sign up
+  - [x] Auto-create default accounts for new users
 
 ### API Integration
 - [ ] Find free exchange rate API (exchangerate-api.io, fixer.io)
@@ -42,8 +46,10 @@
 
 ## 📱 Screen Functionality (High Priority)
 
-### Wallet Screen (80% done)
-- [ ] Replace mock accounts with real data from database
+### Wallet Screen (90% done)
+- [x] Replace mock accounts with real data from database
+- [x] Handle empty state gracefully when no accounts
+- [x] Use proper Account model with currency details
 - [ ] Implement account creation for new currencies
 - [ ] Add pull-to-refresh for balance updates
 - [ ] Connect "Add" button to AddMoneyScreen
