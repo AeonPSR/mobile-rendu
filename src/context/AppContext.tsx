@@ -4,6 +4,12 @@ import UserRepository from '@/repositories/userRepository';
 import AccountRepository from '@/repositories/accountRepository';
 import TransactionRepository from '@/repositories/transactionRepository';
 import ExchangeRateRepository from '@/repositories/exchangeRateRepository';
+import localStorage from '@/repositories/localStorage';
+
+const CACHE_KEYS = {
+  ACCOUNTS: (userId: string) => `@cache_accounts_${userId}`,
+  TRANSACTIONS: (userId: string) => `@cache_transactions_${userId}`,
+};
 
 // Action types
 type AppAction = 
@@ -16,6 +22,7 @@ type AppAction =
   | { type: 'SET_TRANSACTIONS'; payload: Transaction[] }
   | { type: 'ADD_TRANSACTION'; payload: Transaction }
   | { type: 'UPDATE_ACCOUNT'; payload: Account }
+  | { type: 'SET_OFFLINE'; payload: boolean }
   | { type: 'RESET_STATE' };
 
 // Initial state
@@ -27,6 +34,7 @@ const initialState: AppState = {
   transactions: [],
   isLoading: false,
   error: null,
+  isOffline: false,
 };
 
 // Reducer
@@ -66,6 +74,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
           account.id === action.payload.id ? action.payload : account
         ),
       };
+
+    case 'SET_OFFLINE':
+      return { ...state, isOffline: action.payload };
       
     case 'RESET_STATE':
       return initialState;
@@ -96,6 +107,8 @@ interface AppContextType {
   createTransfer: (fromAccountId: string, toAccountId: string, amount: number, description?: string) => Promise<boolean>;
   createConversion: (fromAccountId: string, toAccountId: string, fromAmount: number, exchangeRate: number) => Promise<boolean>;
   loadUserTransactions: (userId: string) => Promise<void>;
+  deleteTransaction: (transactionId: string) => Promise<boolean>;
+  updateTransactionDescription: (transactionId: string, description: string) => Promise<boolean>;
   
   // Exchange rate actions
   getExchangeRate: (fromCurrency: string, toCurrency: string) => Promise<number | null>;
@@ -254,17 +267,30 @@ export function AppProvider({ children }: AppProviderProps) {
   
   // Account management methods
   const loadUserAccounts = async (userId: string): Promise<void> => {
+    // Load from cache first
+    try {
+      const cached = await localStorage.getItem<Account[]>(CACHE_KEYS.ACCOUNTS(userId));
+      if (cached && cached.length > 0) {
+        dispatch({ type: 'SET_ACCOUNTS', payload: cached });
+      }
+    } catch {}
+
+    // Then try API
     try {
       const result = await AccountRepository.getUserAccounts(userId);
       if (result.success) {
-        dispatch({ type: 'SET_ACCOUNTS', payload: result.data || [] });
+        const accounts = result.data || [];
+        dispatch({ type: 'SET_ACCOUNTS', payload: accounts });
+        dispatch({ type: 'SET_OFFLINE', payload: false });
+        // Update cache
+        await localStorage.setItem(CACHE_KEYS.ACCOUNTS(userId), accounts);
       } else {
         console.warn('Failed to load user accounts:', result.error);
-        dispatch({ type: 'SET_ACCOUNTS', payload: [] });
+        dispatch({ type: 'SET_OFFLINE', payload: true });
       }
     } catch (error) {
       console.error('Error loading accounts:', error);
-      dispatch({ type: 'SET_ACCOUNTS', payload: [] });
+      dispatch({ type: 'SET_OFFLINE', payload: true });
     }
   };
 
@@ -389,23 +415,74 @@ export function AppProvider({ children }: AppProviderProps) {
   };
 
   const loadUserTransactions = async (userId: string): Promise<void> => {
+    // Load from cache first
+    try {
+      const cached = await localStorage.getItem<Transaction[]>(CACHE_KEYS.TRANSACTIONS(userId));
+      if (cached && cached.length > 0) {
+        dispatch({ type: 'SET_TRANSACTIONS', payload: cached });
+      }
+    } catch {}
+
+    // Then try API
     try {
       const result = await TransactionRepository.getUserTransactions(userId);
       
       if (result.success && result.data) {
         dispatch({ type: 'SET_TRANSACTIONS', payload: result.data });
+        dispatch({ type: 'SET_OFFLINE', payload: false });
+        // Update cache
+        await localStorage.setItem(CACHE_KEYS.TRANSACTIONS(userId), result.data);
       } else {
         console.error('Failed to load transactions:', result.error);
+        dispatch({ type: 'SET_OFFLINE', payload: true });
       }
     } catch (error) {
       console.error('Network error loading transactions:', error);
+      dispatch({ type: 'SET_OFFLINE', payload: true });
+    }
+  };
+
+  const deleteTransaction = async (transactionId: string): Promise<boolean> => {
+    if (!state.user) return false;
+    try {
+      const result = await TransactionRepository.deleteTransaction(transactionId, state.user.id);
+      if (result.success) {
+        dispatch({
+          type: 'SET_TRANSACTIONS',
+          payload: state.transactions.filter(t => t.id !== transactionId),
+        });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const updateTransactionDescription = async (transactionId: string, description: string): Promise<boolean> => {
+    if (!state.user) return false;
+    try {
+      const result = await TransactionRepository.updateTransactionDescription(transactionId, state.user.id, description);
+      if (result.success) {
+        dispatch({
+          type: 'SET_TRANSACTIONS',
+          payload: state.transactions.map(t =>
+            t.id === transactionId ? { ...t, description } : t
+          ),
+        });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
     }
   };
 
   // Exchange rate actions
   const getExchangeRate = async (fromCurrency: string, toCurrency: string): Promise<number | null> => {
     try {
-      return await ExchangeRateRepository.getExchangeRate(fromCurrency, toCurrency);
+      const result = await ExchangeRateRepository.getExchangeRate(fromCurrency, toCurrency);
+      return result.success && result.data ? result.data.rate : null;
     } catch (error) {
       console.error('Error getting exchange rate:', error);
       return null;
@@ -414,7 +491,8 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const convertAmount = async (amount: number, fromCurrency: string, toCurrency: string): Promise<number | null> => {
     try {
-      return await ExchangeRateRepository.calculateConversion(amount, fromCurrency, toCurrency);
+      const result = await ExchangeRateRepository.calculateConversion(amount, fromCurrency, toCurrency);
+      return result.success && result.data ? result.data.amount : null;
     } catch (error) {
       console.error('Error converting amount:', error);
       return null;
@@ -448,6 +526,8 @@ export function AppProvider({ children }: AppProviderProps) {
     createTransfer,
     createConversion,
     loadUserTransactions,
+    deleteTransaction,
+    updateTransactionDescription,
     getExchangeRate,
     convertAmount,
     setLoading,

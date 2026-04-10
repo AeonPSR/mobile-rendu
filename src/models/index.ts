@@ -105,6 +105,7 @@ export interface AppState {
   transactions: Transaction[];
   isLoading: boolean;
   error: string | null;
+  isOffline: boolean;
 }
 
 export interface LoadingState {

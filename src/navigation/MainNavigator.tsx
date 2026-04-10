@@ -1,8 +1,10 @@
 import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/ThemeContext';
+import OfflineBanner from '@/components/OfflineBanner';
 
 // Import screens
 import WalletScreen from '@/screens/WalletScreen';
@@ -124,7 +126,9 @@ export default function MainNavigator() {
   const { colors } = useTheme();
   
   return (
-    <Tab.Navigator
+    <View style={{ flex: 1 }}>
+      <OfflineBanner />
+      <Tab.Navigator
       initialRouteName="WalletTab"
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -163,6 +167,7 @@ export default function MainNavigator() {
         options={{ tabBarLabel: 'Transactions' }}
       />
 
-    </Tab.Navigator>
+      </Tab.Navigator>
+    </View>
   );
 }

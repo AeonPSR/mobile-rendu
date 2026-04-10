@@ -2,14 +2,22 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { Fonts, Spacing } from '@/utils/config';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { hapticService } from '@/services/hapticService';
 
+type TransactionStackParamList = {
+  Transactions: undefined;
+  TransactionDetail: { transactionId: string };
+};
+
 export default function TransactionsScreen() {
   const { colors } = useTheme();
   const { state, loadUserTransactions } = useApp();
+  const navigation = useNavigation<StackNavigationProp<TransactionStackParamList>>();
   
   useEffect(() => {
     // Load transactions when screen mounts
@@ -86,7 +94,10 @@ export default function TransactionsScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={[styles.transactionItem, { borderBottomColor: colors.border }]}
-            onPress={() => hapticService.selectionChanged()}
+            onPress={() => {
+              hapticService.selectionChanged();
+              navigation.navigate('TransactionDetail', { transactionId: item.id });
+            }}
           >
             <View style={styles.transactionLeft}>
               <View style={[styles.typeIcon, { backgroundColor: getTypeColor(item.type) }]}>

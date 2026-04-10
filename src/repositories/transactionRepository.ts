@@ -523,6 +523,72 @@ export class TransactionRepository {
       return { success: false, error: 'Failed to create conversion transaction' };
     }
   }
+
+  /**
+   * Delete a transaction by ID
+   */
+  async deleteTransaction(transactionId: string, userId: string): Promise<ApiResponse<boolean>> {
+    if (userId === 'guest-user') {
+      try {
+        const existing = await LocalStorage.getItem<Transaction[]>(`${this.CACHE_KEY}_guest-user`) || [];
+        const filtered = existing.filter(t => t.id !== transactionId);
+        await LocalStorage.setItem(`${this.CACHE_KEY}_guest-user`, filtered);
+        return { success: true, data: true };
+      } catch (error) {
+        return { success: false, error: 'Failed to delete transaction' };
+      }
+    }
+
+    try {
+      const client = SupabaseService.getClient();
+      const { error } = await client
+        .from(this.TABLE_NAME)
+        .delete()
+        .eq('id', transactionId);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      await LocalStorage.removeItem(`${this.CACHE_KEY}_${userId}`);
+      return { success: true, data: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to delete transaction' };
+    }
+  }
+
+  /**
+   * Update a transaction's description
+   */
+  async updateTransactionDescription(transactionId: string, userId: string, description: string): Promise<ApiResponse<boolean>> {
+    if (userId === 'guest-user') {
+      try {
+        const existing = await LocalStorage.getItem<Transaction[]>(`${this.CACHE_KEY}_guest-user`) || [];
+        const updated = existing.map(t => t.id === transactionId ? { ...t, description } : t);
+        await LocalStorage.setItem(`${this.CACHE_KEY}_guest-user`, updated);
+        return { success: true, data: true };
+      } catch (error) {
+        return { success: false, error: 'Failed to update transaction' };
+      }
+    }
+
+    try {
+      const client = SupabaseService.getClient();
+      const { error } = await client
+        .from(this.TABLE_NAME)
+        .update({ description })
+        .eq('id', transactionId);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      await LocalStorage.removeItem(`${this.CACHE_KEY}_${userId}`);
+      return { success: true, data: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to update transaction' };
+    }
+  }
 }
 
 export default TransactionRepository.getInstance();
