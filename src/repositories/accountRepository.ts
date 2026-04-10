@@ -69,7 +69,7 @@ export class AccountRepository {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('AccountRepository.getUserAccounts error:', error);
+        console.warn('AccountRepository.getUserAccounts error:', error);
         return {
           success: false,
           error: error.message,
@@ -103,7 +103,7 @@ export class AccountRepository {
         data: accounts,
       };
     } catch (error) {
-      console.error('AccountRepository.getUserAccounts error:', error);
+      console.warn('AccountRepository.getUserAccounts error:', error);
       
       // Try to return cached data on error
       const cachedAccounts = await LocalStorage.getItem<Account[]>(`${this.CACHE_KEY}_${userId}`);
@@ -209,7 +209,7 @@ export class AccountRepository {
         .single();
 
       if (error) {
-        console.error('AccountRepository.createAccount error:', error);
+        console.warn('AccountRepository.createAccount error:', error);
         return {
           success: false,
           error: error.message,
@@ -242,7 +242,7 @@ export class AccountRepository {
         message: 'Account created successfully',
       };
     } catch (error) {
-      console.error('AccountRepository.createAccount error:', error);
+      console.warn('AccountRepository.createAccount error:', error);
       return {
         success: false,
         error: 'Failed to create account',
@@ -367,7 +367,7 @@ export class AccountRepository {
         .single();
 
       if (error) {
-        console.error('AccountRepository.updateBalance error:', error);
+        console.warn('AccountRepository.updateBalance error:', error);
         return {
           success: false,
           error: error.message,
@@ -400,7 +400,7 @@ export class AccountRepository {
         message: 'Balance updated successfully',
       };
     } catch (error) {
-      console.error('AccountRepository.updateBalance error:', error);
+      console.warn('AccountRepository.updateBalance error:', error);
       return {
         success: false,
         error: 'Failed to update balance',
@@ -445,7 +445,7 @@ export class AccountRepository {
         .single();
 
       if (error) {
-        console.error('AccountRepository.getAccountById error:', error);
+        console.warn('AccountRepository.getAccountById error:', error);
         return {
           success: false,
           error: error.message,
@@ -474,7 +474,7 @@ export class AccountRepository {
         data: account,
       };
     } catch (error) {
-      console.error('AccountRepository.getAccountById error:', error);
+      console.warn('AccountRepository.getAccountById error:', error);
       return {
         success: false,
         error: 'Failed to fetch account',

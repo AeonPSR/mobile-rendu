@@ -69,7 +69,7 @@ export class TransactionRepository {
           message: 'Transaction created successfully',
         };
       } catch (error) {
-        console.error('TransactionRepository guest createTransaction error:', error);
+        console.warn('TransactionRepository guest createTransaction error:', error);
         return { success: false, error: 'Failed to create guest transaction' };
       }
     }
@@ -98,7 +98,7 @@ export class TransactionRepository {
         .single();
 
       if (error) {
-        console.error('TransactionRepository.createTransaction error:', error);
+        console.warn('TransactionRepository.createTransaction error:', error);
         return {
           success: false,
           error: error.message,
@@ -135,7 +135,7 @@ export class TransactionRepository {
         message: 'Transaction created successfully',
       };
     } catch (error) {
-      console.error('TransactionRepository.createTransaction error:', error);
+      console.warn('TransactionRepository.createTransaction error:', error);
       return {
         success: false,
         error: 'Failed to create transaction',
@@ -166,7 +166,7 @@ export class TransactionRepository {
         });
       }
     } catch (error) {
-      console.error('Error updating account balances:', error);
+      console.warn('Error updating account balances:', error);
       // Note: In production, would rollback transaction here
     }
   }
@@ -200,7 +200,7 @@ export class TransactionRepository {
         .range(offset, offset + limit - 1);
 
       if (error) {
-        console.error('TransactionRepository.getUserTransactions error:', error);
+        console.warn('TransactionRepository.getUserTransactions error:', error);
         return {
           success: false,
           error: error.message,
@@ -235,7 +235,7 @@ export class TransactionRepository {
         data: transactions,
       };
     } catch (error) {
-      console.error('TransactionRepository.getUserTransactions error:', error);
+      console.warn('TransactionRepository.getUserTransactions error:', error);
       
       // Try cached data on error
       if (offset === 0) {
@@ -270,7 +270,7 @@ export class TransactionRepository {
         .single();
 
       if (error) {
-        console.error('TransactionRepository.getTransactionById error:', error);
+        console.warn('TransactionRepository.getTransactionById error:', error);
         return {
           success: false,
           error: error.message,
@@ -300,7 +300,7 @@ export class TransactionRepository {
         data: transaction,
       };
     } catch (error) {
-      console.error('TransactionRepository.getTransactionById error:', error);
+      console.warn('TransactionRepository.getTransactionById error:', error);
       return {
         success: false,
         error: 'Failed to fetch transaction',
@@ -403,7 +403,7 @@ export class TransactionRepository {
         description: description || `Top-up ${account.currencyCode} ${amount}`,
       });
     } catch (error) {
-      console.error('Error creating top-up:', error);
+      console.warn('Error creating top-up:', error);
       return { success: false, error: 'Failed to create top-up transaction' };
     }
   }
@@ -434,7 +434,7 @@ export class TransactionRepository {
         description: description || `Withdrawal ${account.currencyCode} ${amount}`,
       });
     } catch (error) {
-      console.error('Error creating withdrawal:', error);
+      console.warn('Error creating withdrawal:', error);
       return { success: false, error: 'Failed to create withdrawal' };
     }
   }
@@ -475,7 +475,7 @@ export class TransactionRepository {
         description: description || `Transfer ${amount} ${fromAccount.currencyCode}`,
       });
     } catch (error) {
-      console.error('Error creating transfer:', error);
+      console.warn('Error creating transfer:', error);
       return { success: false, error: 'Failed to create transfer transaction' };
     }
   }
@@ -519,7 +519,7 @@ export class TransactionRepository {
         description: description || `Convert ${fromAmount} ${fromAccount.currencyCode} to ${toAmount.toFixed(2)} ${toAccount.currencyCode}`,
       });
     } catch (error) {
-      console.error('Error creating conversion:', error);
+      console.warn('Error creating conversion:', error);
       return { success: false, error: 'Failed to create conversion transaction' };
     }
   }

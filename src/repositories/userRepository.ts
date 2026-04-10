@@ -61,7 +61,7 @@ export class UserRepository {
         .single();
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.warn('Supabase error:', error);
         return {
           success: false,
           error: error.message,
@@ -86,7 +86,7 @@ export class UserRepository {
         message: 'Account created successfully',
       };
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.warn('Error creating user:', error);
       return {
         success: false,
         error: 'Failed to create account',
@@ -133,7 +133,7 @@ export class UserRepository {
         message: 'Signed in successfully',
       };
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.warn('Error signing in:', error);
       return {
         success: false,
         error: 'Failed to sign in',

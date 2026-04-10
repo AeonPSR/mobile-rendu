@@ -259,7 +259,7 @@ export function AppProvider({ children }: AppProviderProps) {
       }
     } catch (error) {
       dispatch({ type: 'SET_AUTHENTICATED', payload: false });
-      console.error('Error checking auth status:', error);
+      console.warn('Error checking auth status:', error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -289,7 +289,7 @@ export function AppProvider({ children }: AppProviderProps) {
         dispatch({ type: 'SET_OFFLINE', payload: true });
       }
     } catch (error) {
-      console.error('Error loading accounts:', error);
+      console.warn('Error loading accounts:', error);
       dispatch({ type: 'SET_OFFLINE', payload: true });
     }
   };
@@ -325,6 +325,7 @@ export function AppProvider({ children }: AppProviderProps) {
         return false;
       }
     } catch (error) {
+      dispatch({ type: 'SET_OFFLINE', payload: true });
       dispatch({ type: 'SET_ERROR', payload: 'Network error creating account' });
       return false;
     }
@@ -347,6 +348,7 @@ export function AppProvider({ children }: AppProviderProps) {
         return false;
       }
     } catch (error) {
+      dispatch({ type: 'SET_OFFLINE', payload: true });
       dispatch({ type: 'SET_ERROR', payload: 'Network error during top-up' });
       return false;
     }
@@ -367,6 +369,7 @@ export function AppProvider({ children }: AppProviderProps) {
         return false;
       }
     } catch (error) {
+      dispatch({ type: 'SET_OFFLINE', payload: true });
       dispatch({ type: 'SET_ERROR', payload: 'Network error during withdrawal' });
       return false;
     }
@@ -388,6 +391,7 @@ export function AppProvider({ children }: AppProviderProps) {
         return false;
       }
     } catch (error) {
+      dispatch({ type: 'SET_OFFLINE', payload: true });
       dispatch({ type: 'SET_ERROR', payload: 'Network error during transfer' });
       return false;
     }
@@ -409,6 +413,7 @@ export function AppProvider({ children }: AppProviderProps) {
         return false;
       }
     } catch (error) {
+      dispatch({ type: 'SET_OFFLINE', payload: true });
       dispatch({ type: 'SET_ERROR', payload: 'Network error during conversion' });
       return false;
     }
@@ -433,11 +438,11 @@ export function AppProvider({ children }: AppProviderProps) {
         // Update cache
         await localStorage.setItem(CACHE_KEYS.TRANSACTIONS(userId), result.data);
       } else {
-        console.error('Failed to load transactions:', result.error);
+        console.warn('Failed to load transactions:', result.error);
         dispatch({ type: 'SET_OFFLINE', payload: true });
       }
     } catch (error) {
-      console.error('Network error loading transactions:', error);
+      console.warn('Network error loading transactions:', error);
       dispatch({ type: 'SET_OFFLINE', payload: true });
     }
   };
@@ -484,7 +489,7 @@ export function AppProvider({ children }: AppProviderProps) {
       const result = await ExchangeRateRepository.getExchangeRate(fromCurrency, toCurrency);
       return result.success && result.data ? result.data.rate : null;
     } catch (error) {
-      console.error('Error getting exchange rate:', error);
+      console.warn('Error getting exchange rate:', error);
       return null;
     }
   };
@@ -494,7 +499,7 @@ export function AppProvider({ children }: AppProviderProps) {
       const result = await ExchangeRateRepository.calculateConversion(amount, fromCurrency, toCurrency);
       return result.success && result.data ? result.data.amount : null;
     } catch (error) {
-      console.error('Error converting amount:', error);
+      console.warn('Error converting amount:', error);
       return null;
     }
   };

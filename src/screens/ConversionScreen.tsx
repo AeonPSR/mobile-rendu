@@ -87,13 +87,13 @@ export default function ConversionScreen() {
         setConvertedAmount('0.000');
       } else {
         hapticService.notificationError();
-        showAlert('Error', 'Failed to convert currency - check console for details');
+        showAlert('Error', 'Failed to convert currency. Please try again later.');
       }
     } catch (error) {
       setLoading(false);
-      console.error('Error in handleContinue:', error);
+      console.warn('Error in handleContinue:', error);
       hapticService.notificationError();
-      showAlert('Error', 'Network error - check console for details');
+      showAlert('Error', 'You appear to be offline. Please check your connection and try again.');
     }
   };
 

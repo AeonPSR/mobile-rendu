@@ -1,3 +1,8 @@
+// DEAD CODE - Auth is handled directly via UserRepository (Supabase as DB, not auth service).
+// This file used Supabase Auth but was abandoned due to rate limiting.
+// Kept for reference only.
+
+/*
 import { User, ApiResponse } from '@/models';
 import { IAuthRepository } from './interfaces';
 import SupabaseService from '@/services/supabase';
@@ -221,3 +226,4 @@ export class AuthRepository implements IAuthRepository {
 }
 
 export default AuthRepository.getInstance();
+*/

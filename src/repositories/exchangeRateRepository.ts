@@ -60,7 +60,7 @@ export class ExchangeRateRepository {
         .single();
 
       if (error) {
-        console.error('ExchangeRateRepository.getExchangeRate error:', error);
+        console.warn('ExchangeRateRepository.getExchangeRate error:', error);
         
         // Try reverse rate (1 / rate)
         const reverseResult = await this.getReverseRate(fromCurrency, toCurrency);
@@ -90,7 +90,7 @@ export class ExchangeRateRepository {
         data: rate,
       };
     } catch (error) {
-      console.error('ExchangeRateRepository.getExchangeRate error:', error);
+      console.warn('ExchangeRateRepository.getExchangeRate error:', error);
       return {
         success: false,
         error: 'Failed to fetch exchange rate',
@@ -150,7 +150,7 @@ export class ExchangeRateRepository {
         .order('to_currency');
 
       if (error) {
-        console.error('ExchangeRateRepository.getCurrencyRates error:', error);
+        console.warn('ExchangeRateRepository.getCurrencyRates error:', error);
         return {
           success: false,
           error: error.message,
@@ -170,7 +170,7 @@ export class ExchangeRateRepository {
         data: rates,
       };
     } catch (error) {
-      console.error('ExchangeRateRepository.getCurrencyRates error:', error);
+      console.warn('ExchangeRateRepository.getCurrencyRates error:', error);
       return {
         success: false,
         error: 'Failed to fetch currency rates',
@@ -200,7 +200,7 @@ export class ExchangeRateRepository {
         });
 
       if (error) {
-        console.error('ExchangeRateRepository.updateExchangeRates error:', error);
+        console.warn('ExchangeRateRepository.updateExchangeRates error:', error);
         return {
           success: false,
           error: error.message,
@@ -215,7 +215,7 @@ export class ExchangeRateRepository {
         message: `Updated ${updates.length} exchange rates`,
       };
     } catch (error) {
-      console.error('ExchangeRateRepository.updateExchangeRates error:', error);
+      console.warn('ExchangeRateRepository.updateExchangeRates error:', error);
       return {
         success: false,
         error: 'Failed to update exchange rates',

@@ -2,7 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, LogBox } from 'react-native';
+
+// Suppress known Expo Go warnings
+LogBox.ignoreLogs([
+  'expo-notifications',
+  '`expo-notifications`',
+  'shouldShowAlert',
+]);
 
 // Import navigation and context
 import AuthNavigator from './src/navigation/AuthNavigator';

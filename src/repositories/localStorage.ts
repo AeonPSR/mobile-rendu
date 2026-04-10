@@ -18,7 +18,7 @@ export class LocalStorageService implements ILocalStorage {
       const value = await AsyncStorage.getItem(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error(`Error getting item ${key}:`, error);
+      console.warn(`Error getting item ${key}:`, error);
       return null;
     }
   }
@@ -27,7 +27,7 @@ export class LocalStorageService implements ILocalStorage {
     try {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error(`Error setting item ${key}:`, error);
+      console.warn(`Error setting item ${key}:`, error);
       throw error;
     }
   }
@@ -36,7 +36,7 @@ export class LocalStorageService implements ILocalStorage {
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error(`Error removing item ${key}:`, error);
+      console.warn(`Error removing item ${key}:`, error);
       throw error;
     }
   }
@@ -45,7 +45,7 @@ export class LocalStorageService implements ILocalStorage {
     try {
       await AsyncStorage.clear();
     } catch (error) {
-      console.error('Error clearing storage:', error);
+      console.warn('Error clearing storage:', error);
       throw error;
     }
   }
@@ -55,7 +55,7 @@ export class LocalStorageService implements ILocalStorage {
       const keys = await AsyncStorage.getAllKeys();
       return [...keys]; // Convert readonly array to mutable array
     } catch (error) {
-      console.error('Error getting all keys:', error);
+      console.warn('Error getting all keys:', error);
       return [];
     }
   }

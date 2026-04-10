@@ -69,13 +69,13 @@ export default function TransferScreen() {
         setAmount('');
       } else {
         hapticService.notificationError();
-        showAlert('Error', 'Failed to transfer money - check console for details');
+        showAlert('Error', 'Failed to transfer money. Please try again later.');
       }
     } catch (error) {
       setLoading(false);
-      console.error('Error in handleTransfer:', error);
+      console.warn('Error in handleTransfer:', error);
       hapticService.notificationError();
-      showAlert('Error', 'Network error - check console for details');
+      showAlert('Error', 'You appear to be offline. Please check your connection and try again.');
     }
   };
   

@@ -48,7 +48,7 @@ export default function AddMoneyScreen() {
     if (success) {
       showAlert('Success', 'USD account created! You can now add money.');
     } else {
-      showAlert('Error', 'Failed to create account - check console for details');
+      showAlert('Error', 'Failed to create account. Please try again later.');
     }
   };
   
@@ -83,13 +83,13 @@ export default function AddMoneyScreen() {
         setAmount('');
       } else {
         hapticService.notificationError();
-        showAlert('Error', 'Failed to add money - check console for details');
+        showAlert('Error', 'Failed to add money. Please try again later.');
       }
     } catch (error) {
       setLoading(false);
-      console.error('Error in handleAddMoney:', error);
+      console.warn('Error in handleAddMoney:', error);
       hapticService.notificationError();
-      showAlert('Error', 'Network error - check console for details');
+      showAlert('Error', 'You appear to be offline. Please check your connection and try again.');
     }
   };
   

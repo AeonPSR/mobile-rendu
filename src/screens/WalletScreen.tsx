@@ -107,7 +107,7 @@ export default function WalletScreen({ navigation }: Props) {
       <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => hapticService.selectionChanged()}>
+          <TouchableOpacity onPress={() => { hapticService.selectionChanged(); navigation.navigate('Settings'); }}>
             <Ionicons name="person-circle-outline" size={32} color={colors.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.text }]}>My Wallet</Text>
